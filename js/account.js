@@ -62,7 +62,8 @@ const Account = (() => {
         ${subs.length ? `<div class="set-subs${hidden.includes(t) ? ' off' : ''}">${subs.map(sb => tgl(t + '/' + sb, !hidden.includes(t + '/' + sb), sb, true)).join('')}</div>` : ''}</div>`).join('')}</div></div>
       <div class="surface ac-card"><h2><span class="my">my</span><span class="nm">Demo</span></h2>
         <p class="p">Show example data anywhere you haven't logged anything yet. It's never saved to your account, and it disappears for a feature as soon as you add something real.</p>
-        <label class="pj-perm set-tab"><input type="checkbox" data-demotoggle ${Personal.demoOn ? 'checked' : ''}><span class="pj-toggle"></span>Show demo data</label></div>`;
+        <label class="pj-perm set-tab"><input type="checkbox" data-demotoggle ${Personal.demoOn ? 'checked' : ''}><span class="pj-toggle"></span>Show demo data</label></div>
+      <div class="surface ac-card"><h2><span class="my">my</span><span class="nm">Tour</span></h2><p class="p">A quick walkthrough of what everything does.</p><div class="pj-row"><button class="tile pj-btn primary" data-tour>Take the tour</button></div></div>`;
   }
 
   function bind() {

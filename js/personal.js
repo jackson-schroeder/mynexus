@@ -24,7 +24,7 @@ const Personal = (() => {
   // ---------- Demo data ----------
   // Shown only where you have no real data yet (and "Demo data" is on in mySettings). Never saved or synced,
   // and it disappears for a feature as soon as you add something real there.
-  const demoOn = () => db.prefs.demo !== false;
+  const demoOn = () => db.prefs.demo === true; // example data is off unless you turn it on
   const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return ymd(d); };
   const ago = h => Date.now() - h * 36e5;
   const DEMO_TASKS = () => [

@@ -203,3 +203,11 @@ body.gated .navwrap { display: none; }
 
 .ac-danger { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--r-md); border: 1px solid var(--danger, #c0405a); }
 .ac-danger .pj-in { flex: 1; min-width: 0; }
+
+/* First-launch tour */
+.tour { position: fixed; inset: 0; z-index: 40; pointer-events: none; display: grid; align-items: end; justify-items: center; padding: 22px; }
+.tour-card { pointer-events: auto; width: min(520px, 100%); padding: 20px 22px; border-radius: var(--r-xl); display: flex; flex-direction: column; gap: 10px; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border: 1px solid var(--edge); box-shadow: 0 30px 60px rgba(8,0,20,.55); }
+.tour-card h3 { font-size: 26px; font-weight: 500; }
+.tour-ask { align-self: center; }
+.tour:has(.tour-ask) { align-items: center; background: rgba(10,4,20,.5); pointer-events: auto; }
+html.phone .tour { padding: 12px; }

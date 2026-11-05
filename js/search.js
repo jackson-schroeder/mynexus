@@ -46,6 +46,7 @@ const Search = (() => {
     section('Project timeline', 'Projects', 'myProjects', 'timeline weeks phases portions start end date schedule assign cards my cards all cards'),
     section('Project updates', 'Projects', 'myProjects', 'updates activity feed unread news changes message chat conversation group send'),
     section('Weekly miles', 'Fitness/Running', 'myRunning', 'running chart miles per week 3 month year'),
+    action('Take the tour', 'myNexus', 'tour walkthrough help guide tutorial welcome how it works', () => Tour.start()),
     action('Log meal', 'myDiet', 'log food eat ate meal breakfast lunch dinner snack', () => { go('Fitness/Diet'); DietUI.logMeal(); }),
     action('Add meal', 'myDiet', 'create new custom meal recipe ingredients macros', () => { go('Fitness/Diet'); DietUI.addMeal(); }),
     action('Build a smoothie', 'myDiet', 'smoothie shake blend fruit protein', () => { go('Fitness/Diet'); DietUI.smoothie(); }),
