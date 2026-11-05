@@ -189,6 +189,23 @@ const Store = (() => {
     if (up.error) return up.error.message;
     await setUser(data.user); return '';
   }
+  // Delete ALL of this account's data: personal data, and every project you own (friends lose those too).
+  // Needs a connection so the cloud copy really goes; otherwise it would just come back on the next sync.
+  async function resetEverything() {
+    if (!sb || !me) return 'Sign in first.';
+    if (!navigator.onLine) return 'Connect to the internet first, so your account copy is wiped too.';
+    const id = me.id, tries = [
+      sb.from('tasks').delete().eq('owner', id), sb.from('events').delete().eq('owner', id), sb.from('user_kv').delete().eq('owner', id),
+      sb.from('projects').delete().eq('owner', id), sb.from('update_seen').delete().eq('user_id', id), sb.from('members').delete().eq('user_id', id)
+    ];
+    const res = await Promise.all(tries);
+    const bad = res.find((r, i) => r.error && i < 4 && r.error.code !== 'PGRST205');
+    if (bad) return 'Could not delete everything: ' + bad.error.message;
+    queue = []; db = Object.fromEntries(TABLES.map(t => [t, []])); db.profiles.push({ id, username: me.username });
+    emit();
+    if (typeof Personal !== 'undefined') Personal.resetLocal();
+    return '';
+  }
   async function signOut() {
     await sb.auth.signOut();
     me = null; db = Object.fromEntries(TABLES.map(t => [t, []])); queue = [];
@@ -304,7 +321,7 @@ const Store = (() => {
 
   return {
     PERMS, cloud: !!sb, client: sb, get me() { return me; }, get status() { return queue.length && status === 'online' ? 'syncing' : status; }, get ready() { return status !== 'nosetup'; },
-    subscribe: f => (listeners.add(f), () => listeners.delete(f)), start, signUp, signIn, signOut, requestCode, verifyCode, requestReset, resetPassword, kick: emit,
+    subscribe: f => (listeners.add(f), () => listeners.delete(f)), start, signUp, signIn, signOut, requestCode, verifyCode, requestReset, resetPassword, resetEverything, kick: emit,
     get, insert, update, remove, myProjects, steps, cards, projectCards, roles, members, comments, attachments,
     myInvites, projectInvites, note, updates, unread, markSeen, seenIds, milestones, get v2Missing() { return v2Missing; }, username, initials, can, progress, startProject, addStep, addCard, moveCard, moveStep, comment,
     invite, findUser, acceptInvite, attach, fileUrl, removeAttachment

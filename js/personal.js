@@ -168,8 +168,11 @@ const Personal = (() => {
   const tasksOn = date => shown(db.tasks, DEMO_TASKS).filter(t => t.date === date).sort(byTime);
   const eventsOn = date => shown(db.events, DEMO_EVENTS).filter(e => e.date === date).sort((a, b) => (a.allDay ? -1 : b.allDay ? 1 : a.start < b.start ? -1 : 1));
 
+  // Wipe everything personal on this device (the cloud copy is deleted by Store.resetEverything first)
+  function resetLocal() { db = blank(); db.owner = Store.me?.id ?? null; emit(); }
+
   return {
-    ymd, today, byTime, start, subscribe: f => (listeners.add(f), () => listeners.delete(f)),
+    resetLocal, ymd, today, byTime, start, subscribe: f => (listeners.add(f), () => listeners.delete(f)),
     get tasks() { return shown(db.tasks, DEMO_TASKS); }, get events() { return shown(db.events, DEMO_EVENTS); }, get activity() { return shown(db.activity, DEMO_ACTIVITY); },
     get demoOn() { return demoOn(); }, isDemo: kind => demoOn() && !db[kind].length, get prefs() { return db.prefs; }, setPrefs, getKv, setKv,
     get pending() { return db.queue.length; }, get cloudMissing() { return missing; }, get synced() { return !!sb() && db.owner === Store.me?.id; },

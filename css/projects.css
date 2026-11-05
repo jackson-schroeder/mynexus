@@ -200,3 +200,6 @@ textarea.pj-in { resize: none; line-height: 1.5; }
 .gate-card { margin: 0; }
 .gate-card h2 { font-size: 40px; }
 body.gated .navwrap { display: none; }
+
+.ac-danger { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--r-md); border: 1px solid var(--danger, #c0405a); }
+.ac-danger .pj-in { flex: 1; min-width: 0; }

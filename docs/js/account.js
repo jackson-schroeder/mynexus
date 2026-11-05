@@ -1,7 +1,7 @@
 // mySettings: Account card + Tabs card.
 // Account: one myNexus account (Supabase) for everything — myProjects, myTodo, myCalendar, myRecents.
 const Account = (() => {
-  let root = null, mode = 'in', email = '';
+  let root = null, mode = 'in', email = '', resetAsk = false;
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function mount(el) {
     if (root !== el) { root = el; root.innerHTML = '<div class="set-wrap"><div id="acBox"></div><div id="tabsBox"></div></div>'; bind(); }
@@ -45,6 +45,7 @@ const Account = (() => {
         <div><h2>@${esc(me.username)}</h2><div class="p" id="acEmail">${esc(email)}</div></div></div>
       <div class="ac-sync">${st.map(([l, v, ok]) => `<div class="tile ac-row"><span class="ac-dot${ok ? ' ok' : ''}"></span><div><div class="it">${l}</div><div class="p">${v}</div></div></div>`).join('')}</div>
       <div class="pj-row"><span class="p">Signed in on this computer. Use the same email and password on your phone.</span><span class="pj-spacer"></span><button class="tile pj-btn" data-signout>Sign out</button></div>
+      ${resetAsk ? `<div class="ac-danger"><p class="p">This permanently deletes ALL your tasks, calendar, fitness and diet logs, settings and every project you own (your friends lose those projects too). It can't be undone. Type <b>RESET</b> to confirm.</p><div class="pj-row"><input class="pj-in" id="acResetIn" placeholder="RESET" autocomplete="off"><button class="tile pj-btn danger" data-reset-go>Delete everything</button><button class="tile pj-btn" data-reset-cancel>Cancel</button></div><div class="pj-err" id="acResetErr"></div></div>` : `<div class="pj-row"><span class="p">Start over with a clean account.</span><span class="pj-spacer"></span><button class="tile pj-btn danger" data-reset-ask>Reset all my data</button></div>`}
     </div>`;
     if (!email) loadEmail();
   }
@@ -75,10 +76,20 @@ const Account = (() => {
       e.target.blur();
     });
     root.addEventListener('click', async e => {
-      const t = e.target.closest('[data-mode],[data-go-auth],[data-signout]');
+      const t = e.target.closest('[data-mode],[data-go-auth],[data-signout],[data-reset-ask],[data-reset-go],[data-reset-cancel]');
       if (!t) return;
       if (t.dataset.mode) { mode = t.dataset.mode; render(); }
       else if ('signout' in t.dataset) { email = ''; await Store.signOut(); }
+      else if ('resetAsk' in t.dataset) { resetAsk = true; render(); }
+      else if ('resetCancel' in t.dataset) { resetAsk = false; render(); }
+      else if ('resetGo' in t.dataset) {
+        const err = root.querySelector('#acResetErr');
+        if (root.querySelector('#acResetIn').value.trim() !== 'RESET') { err.textContent = 'Type RESET (capitals) to confirm.'; return; }
+        err.textContent = 'Deleting…';
+        const msg = await Store.resetEverything();
+        if (msg) { err.textContent = msg; return; }
+        resetAsk = false; render(); renderTabs();
+      }
       else {
         const err = root.querySelector('#acErr'); err.textContent = '…';
         const em = root.querySelector('#acEmailIn').value.trim(), pw = root.querySelector('#acPass').value;
