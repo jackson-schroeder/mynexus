@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a0f26">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="pwa/icon-192.png">
+<link rel="apple-touch-icon" href="pwa/icon-192.png">
+<title>myNexus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/projects.css">
+<link rel="stylesheet" href="css/time.css">
+<link rel="stylesheet" href="css/fitness.css">
+<link rel="stylesheet" href="css/mobile.css">
+</head>
+<body>
+<div class="dragbar"></div>
+<div class="topzone"><div class="handle"></div><div class="winctl glass">
+  <button onclick="nexus.min()" title="Minimize"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+  <button onclick="nexus.toggle()" title="Full screen"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></button>
+  <button class="x" onclick="nexus.close()" title="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div></div>
+<div class="shell">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <!-- streak fire (purple to white) -->
+      <linearGradient id="stFire" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#6b3fe0"/><stop offset=".6" stop-color="#b69cff"/><stop offset="1" stop-color="#e9defa"/></linearGradient>
+      <linearGradient id="stFireIn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#c9a7ff"/><stop offset=".5" stop-color="#f3ecff"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+      <linearGradient id="ig" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" style="stop-color: var(--icon-a)"/>
+        <stop offset="1" style="stop-color: var(--icon-b)"/>
+      </linearGradient>
+    </defs>
+  </svg>
+  <div class="navwrap"><nav class="glass">
+    <span class="indicator"></span><span class="hoverdot"></span>
+    <button class="active" data-label="myDashboard" data-go="Dashboard" title="myDashboard"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg><span class="nav-lbl"><span class="my">my</span><span class="nm">Dashboard</span></span></button>
+    <button data-label="myFitness" data-go="Fitness" title="myFitness"><svg viewBox="0 0 24 24"><g transform="matrix(-1 0 0 1 24 0)"><circle cx="15.4" cy="4.4" r="1.9"/><path d="M14 7.6l-3.2 5"/><path d="M10.8 12.6l3.4 2.2-1.2 4.8"/><path d="M10.8 12.6l-2 3.4-3.6 1.2"/><path d="M13.6 8.4l2.6 2.2 2.4-1.4"/><path d="M13.6 8.4l-3.2-.6-1.7 2.1"/></g></svg><span class="nav-lbl"><span class="my">my</span><span class="nm">Fitness</span></span></button>
+    <button data-label="myTime" data-go="Time" title="myTime"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.8V12l2.8 1.8"/></svg><span class="nav-lbl"><span class="my">my</span><span class="nm">Time</span></span></button>
+    <button data-label="myProjects" data-go="Projects" title="myProjects"><svg viewBox="0 0 24 24"><path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h4l2 2h8a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/></svg><span class="nav-lbl"><span class="my">my</span><span class="nm">Projects</span></span></button>
+    <button data-label="myFinance" data-go="Finance" title="myFinance"><svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 12h.01M17.5 12h.01"/></svg><span class="nav-lbl"><span class="my">my</span><span class="nm">Finance</span></span></button>
+  </nav></div>
+
+  <div class="panel glass">
+    <div class="top">
+      <div class="brand">
+        <h1 data-go="Dashboard" title="Back to myDashboard"><span class="my">my</span><span class="nm">Nexus</span><span class="ver">V2</span></h1>
+        <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="searchIn" placeholder="Search myNexus…" autocomplete="off" spellcheck="false"></label>
+      </div>
+      <div class="right">
+        <div class="date" id="date"></div>
+        <div class="weather" id="weather"></div>
+        <div class="iconbtn tile" data-go="Settings" title="mySettings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></div>
+      </div>
+    </div>
+
+    <div class="view on" id="dash">
+    <div class="hero">
+      <div class="card tile today" data-go="Time/Calendar" data-tab="Time/Calendar">
+        <h3><span><span class="my">my</span><span class="nm">Calendar</span></span></h3>
+        <div class="sub">Today</div>
+        <div class="dash-agenda" id="dashAgenda"></div>
+      </div>
+
+      <div class="summary">
+        <div class="card tile recents">
+          <h3><span><span class="my">my</span><span class="nm">Recents</span></span></h3>
+          <div class="updates" id="updates"></div>
+        </div>
+
+        <div class="card tile chart" data-go="Fitness" data-tab="Fitness">
+          <h3><span><span class="my">my</span><span class="nm">Fitness</span></span></h3>
+          <div id="dashFitness"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lower">
+      <div class="section tile" data-tab="Time/Todo">
+        <h2 data-go="Time/Todo"><span class="my">my</span><span class="nm">Todo</span></h2>
+        <div id="dashTodo"></div>
+      </div>
+
+      <div class="section tile" data-tab="Projects">
+        <h2 data-go="Projects"><span class="my">my</span><span class="nm">Projects</span></h2>
+        <div id="dashProjects"></div>
+      </div>
+    </div>
+    </div>
+
+    <div class="view page" id="page">
+      <div class="page-head"><h1 id="pageTitle"></h1><div class="subtabs" id="subtabs"></div></div>
+      <div class="empty tile">Nothing here yet.</div>
+      <div class="pj-root" id="projectsRoot" hidden></div>
+      <div class="mod-root" id="todoRoot" hidden></div>
+      <div class="mod-root" id="calRoot" hidden></div>
+      <div class="mod-root" id="settingsRoot" hidden></div>
+      <div class="mod-root" id="liftRoot" hidden></div>
+      <div class="mod-root" id="dietRoot" hidden></div>
+      <div class="mod-root" id="runRoot" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/store.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/personal.js"></script>
+<script src="js/time.js"></script>
+<script src="js/authflow.js"></script>
+<script src="js/account.js"></script>
+<script src="js/fitness.js"></script>
+<script src="js/foods.js"></script>
+<script src="js/diet.js"></script>
+<script src="js/lift.js"></script>
+<script src="js/app.js"></script>
+<script src="js/search.js"></script>
+<script src="js/devcheck.js"></script>
+<script>if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js");</script>
+</body>
+</html>
