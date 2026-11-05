@@ -157,7 +157,7 @@ const TimeUI = (() => {
 
   // ======================= myCalendar =======================
   const Calendar = (() => {
-    let root = null, month = P.today().slice(0, 7), day = P.today(), drag = null;
+    let root = null, month = P.today().slice(0, 7), day = P.today(), drag = null, tray = null, placing = null;
     const HOUR = 52;
     function mount(el) {
       if (root !== el) { root = el; bind(); }
@@ -186,6 +186,7 @@ const TimeUI = (() => {
           <div class="cal-head">
             <h2><span class="nm">${MONTHS[m - 1]}</span> <span class="my">${y}</span></h2>${P.isDemo('events') ? '<span class="fx-demo">Demo data</span>' : ''}
             <div class="pj-spacer"></div>
+            <button class="tile pj-btn${tray ? ' primary' : ''}" data-new="cards">Add Cards</button>
             <button class="tile pj-btn" data-nav="today">Today</button>
             <button class="tile pj-btn cal-arrow" data-nav="-1" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
             <button class="tile pj-btn cal-arrow" data-nav="1" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -193,7 +194,7 @@ const TimeUI = (() => {
           <div class="cal-dow">${DAYS.map(d => `<span>${d.slice(0, 3)}</span>`).join('')}</div>
           <div class="cal-grid">${grid}</div>
         </section>
-        ${dayPanel()}
+        ${tray ? trayPanel() : dayPanel()}
       </div>`;
       const ntl = root.querySelector('.cal-tl');
       if (ntl) { ntl.scrollTop = scroll; ntl.dataset.scrolled = 1; }
@@ -212,11 +213,12 @@ const TimeUI = (() => {
       const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
       return `<aside class="surface cal-day">
         <div class="cal-dayhead"><div><div class="p">${dayLabel(day)}</div><h3>${longDay(day)}</h3></div></div>
-        <div class="pj-row"><button class="tile pj-btn primary" data-new="event">+ Event</button><button class="tile pj-btn" data-new="task">+ Task</button></div>
+        <div class="pj-row"><button class="tile pj-btn primary" data-new="event">+ Event</button><button class="tile pj-btn" data-new="task">+ Task</button><button class="tile pj-btn" data-new="sleep">Set Sleep Time</button></div>
         ${allDay.length || untimed.length ? `<div class="cal-allday">${allDay.map(e => `<div class="tile cal-chip c${e.color}" data-ev="${e.id}" draggable="true">${esc(e.title)}<span class="p">All day</span></div>`).join('')}
           ${untimed.map(x => taskRow(x, { compact: true, hideDate: true, draggable: true })).join('')}</div>` : ''}
         <div class="cal-tl"><div class="cal-hours" style="height:${24 * HOUR}px">
           ${Array.from({ length: 24 }, (_, h) => `<div class="cal-hour" style="top:${h * HOUR}px" data-hour="${h}"><span>${h === 0 ? '' : time12(`${h}:00`).replace(':00', '')}</span></div>`).join('')}
+          ${sleepBlocks()}
           ${blocks.map(b => {
             const style = `top:${b.s / 60 * HOUR}px;height:${Math.max(24, (b.en - b.s) / 60 * HOUR - 2)}px;left:calc(56px + (100% - 62px) * ${b.lane / b.cols});width:calc((100% - 62px) / ${b.cols} - 4px)`;
             return b.type === 'e'
@@ -227,6 +229,59 @@ const TimeUI = (() => {
         </div></div>
         ${!evs.length && !ts.length ? `<div class="p cal-free">Nothing scheduled. Drag items here from another day, or add one.</div>` : ''}
       </aside>`;
+    }
+    // ---- Add Cards: project cards you can drag (or tap, then tap a day) onto the calendar ----
+    const shortDate = d => new Date(d + 'T12:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    function trayPanel() {
+      const me = Store.me?.id, projects = Store.myProjects();
+      if (!tray.pid || !projects.some(p => p.id === tray.pid)) tray.pid = projects[0]?.id;
+      const last = pid => Store.steps(pid).slice(-1)[0]?.id;
+      const tile = c => {
+        const l = CardLink.forCard(c.id), tk = l && P.tasks.find(x => x.id === l.taskId);
+        return `<div class="tile cal-pc${placing === c.id ? ' placing' : ''}${CardLink.cardDone(c) ? ' done' : ''}" data-pcard="${c.id}" draggable="true"><span class="it">${esc(c.title)}</span>${tk?.date ? `<span class="chip">${shortDate(tk.date)}</span>` : ''}</div>`;
+      };
+      let body = '';
+      if (!projects.length) body = '<div class="p cal-free">No projects yet. Start one in myProjects.</div>';
+      else if (tray.src === 'todo') {
+        const groups = projects.map(p => ({ p, cs: Store.projectCards(p.id).filter(c => c.assignees.includes(me) && c.step_id !== last(p.id)) })).filter(g => g.cs.length);
+        body = groups.length ? groups.map(g => `<div class="tm-gh">${esc(g.p.name)}</div>${g.cs.map(tile).join('')}`).join('') : '<div class="p cal-free">Nothing on your project to-do yet. Cards assigned to you show up here.</div>';
+      } else {
+        body = `<select class="pj-in" data-traypid>${projects.map(p => `<option value="${p.id}" ${p.id === tray.pid ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`
+          + (Store.steps(tray.pid).map(s => `<div class="tm-gh">${esc(s.name)}</div>${Store.cards(s.id).map(tile).join('') || '<div class="p">No cards</div>'}`).join(''));
+      }
+      const pc = placing && Store.get('cards', placing);
+      return `<aside class="surface cal-day cal-tray">
+        <div class="pj-row"><h3>Add Cards</h3><span class="pj-spacer"></span><button class="pj-x" data-trayx aria-label="Close">×</button></div>
+        <div class="td-seg"><button class="${tray.src === 'todo' ? 'on' : ''}" data-traysrc="todo">My to-do</button><button class="${tray.src === 'tables' ? 'on' : ''}" data-traysrc="tables">Card tables</button></div>
+        <div class="p">${pc ? `Tap a day to place “${esc(pc.title)}”.` : 'Drag a card onto a day, or tap a card then tap a day. Finishing it anywhere finishes it everywhere.'}</div>
+        <div class="cal-tray-list">${body}</div></aside>`;
+    }
+
+    // ---- Sleep time: shaded on the day timeline ----
+    function sleepBlocks() {
+      const s = P.getKv('sleep', null); if (!s?.bed || !s?.wake) return '';
+      const bed = mins(s.bed), wake = mins(s.wake);
+      const spans = bed > wake ? [[0, wake], [bed, 1440]] : bed < wake ? [[bed, wake]] : [];
+      return spans.map(([a, b], i) => `<div class="cal-sleep" style="top:${a / 60 * HOUR}px;height:${(b - a) / 60 * HOUR}px"><span>${i === 0 ? 'Sleep · until ' + time12(s.wake) : 'Sleep · from ' + time12(s.bed)}</span></div>`).join('');
+    }
+    function sleepModal() {
+      const s = P.getKv('sleep', null) || { bed: '23:00', wake: '07:00' }, wrap = document.createElement('div');
+      wrap.className = 'pj-overlay';
+      wrap.innerHTML = `<div class="pj-modal glass cal-modal"><h3>Sleep time</h3>
+        <p class="p">Blocked out on your calendar every day, so nothing gets planned over it.</p>
+        <label class="tm-field"><span>Bedtime</span><input type="time" class="pj-in" id="slBed" value="${s.bed}"></label>
+        <label class="tm-field"><span>Wake up</span><input type="time" class="pj-in" id="slWake" value="${s.wake}"></label>
+        <div class="pj-row end">${P.getKv('sleep', null) ? '<button class="tile pj-btn danger" data-clear>Remove</button>' : ''}<button class="tile pj-btn" data-x>Cancel</button><button class="tile pj-btn primary" data-save>Save</button></div></div>`;
+      document.body.appendChild(wrap);
+      requestAnimationFrame(() => wrap.classList.add('on'));
+      const close = () => { wrap.classList.remove('on'); setTimeout(() => wrap.remove(), 250); };
+      wrap.addEventListener('pointerdown', e => { if (e.target === wrap) close(); });
+      wrap.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+      wrap.addEventListener('click', e => {
+        if (e.target.closest('[data-x]')) close();
+        else if (e.target.closest('[data-clear]')) { P.setKv('sleep', null); close(); render(); }
+        else if (e.target.closest('[data-save]')) { const bed = wrap.querySelector('#slBed').value, wake = wrap.querySelector('#slWake').value; if (bed && wake) { P.setKv('sleep', { bed, wake }); close(); render(); } }
+      });
     }
     const mins = t => { const [h, m] = (t || '0:0').split(':').map(Number); return h * 60 + m; };
 
@@ -296,11 +351,14 @@ const TimeUI = (() => {
 
     function bind() {
       root.addEventListener('click', e => {
-        const el = e.target.closest('[data-check],[data-day],[data-nav],[data-new],[data-ev],[data-task],[data-hour]');
+        const el = e.target.closest('[data-check],[data-day],[data-nav],[data-new],[data-ev],[data-task],[data-hour],[data-trayx],[data-traysrc],[data-pcard]');
         if (!el) return;
         const d = el.dataset;
         if (d.check) { e.stopPropagation(); P.toggleTask(d.check); }
-        else if (d.day) { day = d.day; if (day.slice(0, 7) !== month) month = day.slice(0, 7); render(); }
+        else if ('trayx' in d) { tray = null; placing = null; render(); }
+        else if (d.traysrc) { tray.src = d.traysrc; render(); }
+        else if (d.pcard) { placing = placing === d.pcard ? null : d.pcard; render(); }
+        else if (d.day) { if (placing) { CardLink.place(placing, d.day); placing = null; } day = d.day; if (day.slice(0, 7) !== month) month = day.slice(0, 7); render(); }
         else if (d.nav) {
           if (d.nav === 'today') { day = P.today(); month = day.slice(0, 7); }
           else { const [y, m] = month.split('-').map(Number); const n = new Date(y, m - 1 + +d.nav, 1); month = P.ymd(n).slice(0, 7); }
@@ -308,14 +366,16 @@ const TimeUI = (() => {
         }
         else if (d.new === 'event') eventModal(null, day);
         else if (d.new === 'task') taskModal(day);
+        else if (d.new === 'sleep') sleepModal();
+        else if (d.new === 'cards') { tray = tray ? null : { src: 'todo' }; placing = null; render(); }
         else if (d.ev) eventModal(P.event(d.ev));
         else if (d.task) { window.go?.('Time/Todo'); }
         else if (d.hour) eventModal(null, day, `${String(d.hour).padStart(2, '0')}:00`);
       });
       // Drag events and tasks onto a day to reschedule
       root.addEventListener('dragstart', e => {
-        const ev = e.target.closest('[data-ev]'), tk = e.target.closest('[data-task]');
-        drag = ev ? { type: 'e', id: ev.dataset.ev } : tk ? { type: 't', id: tk.dataset.task } : null;
+        const ev = e.target.closest('[data-ev]'), tk = e.target.closest('[data-task]'), pc = e.target.closest('[data-pcard]');
+        drag = pc ? { type: 'c', id: pc.dataset.pcard } : ev ? { type: 'e', id: ev.dataset.ev } : tk ? { type: 't', id: tk.dataset.task } : null;
         if (!drag) return;
         e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', drag.id);
       });
@@ -328,14 +388,16 @@ const TimeUI = (() => {
         const c = drag && e.target.closest('[data-day]');
         if (!c) return;
         e.preventDefault();
-        drag.type === 'e' ? P.updateEvent(drag.id, { date: c.dataset.day }) : P.updateTask(drag.id, { date: c.dataset.day });
+        drag.type === 'c' ? CardLink.place(drag.id, c.dataset.day) : drag.type === 'e' ? P.updateEvent(drag.id, { date: c.dataset.day }) : P.updateTask(drag.id, { date: c.dataset.day });
         day = c.dataset.day; drag = null; render();
       });
+      root.addEventListener('change', e => { if (e.target.dataset.traypid) { tray.pid = e.target.value; render(); } });
       root.addEventListener('dragend', () => { drag = null; root.querySelectorAll('.cal-cell.drop').forEach(x => x.classList.remove('drop')); });
     }
     // Search hook: open myCalendar on a given day
     function openDay(date) { day = date; month = date.slice(0, 7); go('Time/Calendar'); }
-    return { mount, openDay };
+    function openTray() { tray = tray || { src: 'todo' }; go('Time/Calendar'); render(); }
+    return { mount, openDay, openTray };
   })();
 
   return { Todo, Calendar, taskRow, animateCheck, time12, dayLabel, CHECK };

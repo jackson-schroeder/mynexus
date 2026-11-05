@@ -31,6 +31,7 @@ const Projects = (() => {
     if (Store.cloud && !me) root.innerHTML = authView();
     else if (view.name === 'board' && Store.get('projects', view.id)) root.innerHTML = boardView(view.id);
     else { view = { name: 'list' }; root.innerHTML = listView(); }
+    setTimeout(boardScroll);
     if (view.tab === 'updates') setTimeout(watchSeen); // start noticing which unread updates you actually look at
   }
   const CHECK = '<svg viewBox="0 0 24 24"><path d="M6 12.5l4 4 8-9"/></svg>';
@@ -78,6 +79,7 @@ const Projects = (() => {
   function boardView(pid) {
     const p = Store.get('projects', pid);
     const canSteps = Store.can(pid, 'edit_steps'), canCards = Store.can(pid, 'create_cards'), canMove = Store.can(pid, 'move_cards');
+    const colors = userColors(pid);
     const inTl = view.tab === 'timeline' && view.tlPhase, phaseSet = inTl ? phaseIds(pid, view.tlPhase) : null;
     const cols = Store.steps(pid).map(s => {
       const cs = Store.cards(s.id).filter(c => !phaseSet || phaseSet.has(c.id));
@@ -87,17 +89,16 @@ const Projects = (() => {
           <span class="chip">${cs.length}</span>
           ${canSteps ? `<button class="pj-x" data-act="delstep" data-id="${s.id}" title="Delete step">×</button>` : ''}
         </div>
-        <div class="pj-cards" data-drop="${s.id}">${cs.map(c => cardTile(c, canMove)).join('')}</div>
+        <div class="pj-cards" data-drop="${s.id}">${cs.map(c => cardTile(c, canMove, colors)).join('')}</div>
         ${canCards ? `<button class="tile pj-btn pj-add" data-act="addcard" data-id="${s.id}">+ Add card</button>` : ''}
       </div>`;
     }).join('');
     const tab = view.tab || 'cards', nUnread = Store.unread(pid).length;
-    const tabs = `<div class="td-seg pj-ptabs">${[['cards', 'Cards'], ['timeline', 'Timeline'], ['updates', 'Updates']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="ptab" data-tab="${k}">${l}${k === 'updates' && nUnread ? ` <span class="pj-badge">${nUnread}</span>` : ''}</button>`).join('')}</div>`;
+    const tabs = `<div class="td-seg pj-ptabs">${[['cards', 'Cards'], ['timeline', 'Timeline'], ['updates', 'Updates'], ['todo', 'To-do'], ['people', 'People']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="ptab" data-tab="${k}">${l}${k === 'updates' && nUnread ? ` <span class="pj-badge">${nUnread}</span>` : ''}</button>`).join('')}</div>`;
     return `${bar(`<button class="tile pj-btn" data-act="back">← All projects</button>${tabs}
-        <input class="pj-title" data-project-name="${pid}" value="${esc(p.name)}" ${Store.can(pid, 'manage_roles') ? '' : 'readonly'}>
-        <button class="tile pj-btn" data-act="people">People</button>
+        ${tab === 'cards' ? '<h3 class="pj-ctab">All Project cards</h3>' : `<input class="pj-title" data-project-name="${pid}" value="${esc(p.name)}" ${Store.can(pid, 'manage_roles') ? '' : 'readonly'}>`}
         ${Store.can(pid, 'manage_roles') ? `<button class="tile pj-btn" data-act="roles">Roles</button>` : ''}`)}
-      ${tab === 'timeline' && !inTl ? timelineView(pid) : tab === 'updates' ? updatesView(pid) : `${inTl ? `<div class="pj-row"><button class="tile pj-btn" data-act="tlback">← Timeline</button><h3>${esc(phaseName(pid, view.tlPhase))}</h3></div>` : ''}<div class="pj-board" data-board="${pid}">${cols}
+      ${tab === 'people' ? peopleView(pid, colors) : tab === 'todo' ? todoView(pid, colors) : tab === 'timeline' && !inTl ? timelineView(pid) : tab === 'updates' ? updatesView(pid) : `${inTl ? `<div class="pj-row"><button class="tile pj-btn" data-act="tlback">← Timeline</button><h3>${esc(phaseName(pid, view.tlPhase))}</h3></div>` : ''}<div class="pj-sb" hidden><i></i></div><div class="pj-board" data-board="${pid}">${cols}
         ${canSteps ? `<button class="tile pj-col pj-newstep" data-act="addstep">+ Add step</button>` : ''}</div>`}`;
   }
 
@@ -219,13 +220,112 @@ const Projects = (() => {
     pendingSeen = new Set();
   }
 
-  function cardTile(c, canMove) {
-    const nc = Store.comments(c.id).length, na = Store.attachments(c.id).length;
-    return `<div class="tile pj-card" data-act="card" data-id="${c.id}" ${canMove ? 'draggable="true"' : ''}>
-      <div class="pj-ctitle">${esc(c.title)}</div>
+  // ---------- People colors: everyone on a project gets their own contrasting color ----------
+  const PALETTE = ['#ff8fb8', '#6fd3ff', '#ffc978', '#7be0b0', '#ff9a85', '#b7e86e', '#8fa8ff', '#e3a0ff'];
+  function userColors(pid) {
+    const p = Store.get('projects', pid);
+    const ids = Store.members(pid).map(m => m.user_id).sort((a, b) => (a === p?.owner ? -1 : b === p?.owner ? 1 : a < b ? -1 : 1));
+    return Object.fromEntries(ids.map((u, i) => [u, PALETTE[i % PALETTE.length]]));
+  }
+  const ini = (uid, colors, big) => `<span class="pj-ini${big ? ' big' : ''}" style="--pc:${colors[uid] || PALETTE[0]}" title="@${esc(Store.username(uid))}">${initials(Store.username(uid))}</span>`;
+
+  // ---------- Right-click menus, confirm box, toast ----------
+  let menuEl = null;
+  const closeMenu = () => { menuEl?.remove(); menuEl = null; };
+  function openMenu(x, y, items) {
+    closeMenu();
+    menuEl = document.createElement('div'); menuEl.className = 'pj-menu glass';
+    menuEl.innerHTML = items.map((it, i) => it.sep ? '<div class="pj-menu-sep"></div>' : it.head ? `<div class="pj-menu-head">${esc(it.head)}</div>`
+      : `<button class="pj-menu-it${it.danger ? ' danger' : ''}" data-mi="${i}" ${it.disabled ? 'disabled' : ''}>${it.dot ? `<i class="pj-dot" style="background:${it.dot}"></i>` : ''}<span>${esc(it.label)}</span>${it.check ? '<em>✓</em>' : ''}</button>`).join('');
+    document.body.appendChild(menuEl);
+    const w = menuEl.offsetWidth, h = menuEl.offsetHeight;
+    menuEl.style.left = Math.max(8, Math.min(x, innerWidth - w - 8)) + 'px'; menuEl.style.top = Math.max(8, Math.min(y, innerHeight - h - 8)) + 'px';
+    menuEl.addEventListener('click', e => { const b = e.target.closest('[data-mi]'); if (!b) return; const it = items[+b.dataset.mi]; closeMenu(); it.on?.(); });
+  }
+  function toast(msg) {
+    document.querySelectorAll('.pj-toast').forEach(t => t.remove());
+    const t = document.createElement('div'); t.className = 'pj-toast glass'; t.textContent = msg; document.body.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('on'));
+    setTimeout(() => { t.classList.remove('on'); setTimeout(() => t.remove(), 300); }, 4500);
+  }
+  const BIN_MSG = 'Sent to recycle bin, you have 30 days to recover from settings';
+  function confirmBox(message, okLabel = 'Delete') {
+    return new Promise(res => {
+      let done = false; const fin = v => { if (!done) { done = true; res(v); } };
+      const el = openModal(`<h3>Are you sure?</h3><p class="p">${esc(message)}</p><div class="pj-row end"><button class="tile pj-btn" data-act="close">Cancel</button><button class="tile pj-btn danger" id="pjOk">${esc(okLabel)}</button></div>`, null, () => fin(false));
+      el.querySelector('#pjOk').onclick = () => { fin(true); closeModal(); };
+    });
+  }
+  async function deleteCard(id) { // returns true if it was deleted
+    const c = Store.get('cards', id); if (!c) return false;
+    if (!(await confirmBox(`Delete “${c.title}”?`, 'Delete card'))) return false;
+    Store.note(c.project_id, `deleted card “${c.title}”`);
+    if (typeof Bin !== 'undefined') { Bin.addCard(id); toast(BIN_MSG); } else Store.remove('cards', id);
+    return true;
+  }
+  async function deleteProject(pid) {
+    const p = Store.get('projects', pid); if (!p) return;
+    if (!(await confirmBox(`Delete “${p.name}”? Everyone on it loses access until you restore it.`, 'Delete project'))) return;
+    if (typeof Bin !== 'undefined') { Bin.addProject(pid); toast(BIN_MSG); } else Store.remove('projects', pid);
+    render();
+  }
+  function toggleAssign(id, uid) {
+    const c = Store.get('cards', id), has = c.assignees.includes(uid);
+    Store.update('cards', id, { assignees: has ? c.assignees.filter(u => u !== uid) : [...c.assignees, uid] });
+    Store.note(c.project_id, `${has ? 'unassigned' : 'assigned'} “${c.title}” ${has ? 'from' : 'to'} @${Store.username(uid)}`);
+  }
+  function cardMenu(id, x, y) {
+    const c = Store.get('cards', id), pid = c.project_id, colors = userColors(pid), canEdit = Store.can(pid, 'edit_cards'), canDel = Store.can(pid, 'delete_cards'), items = [];
+    if (canEdit) { items.push({ head: 'Assign to' }); Store.members(pid).forEach(m => items.push({ label: '@' + Store.username(m.user_id), dot: colors[m.user_id], check: c.assignees.includes(m.user_id), on: () => toggleAssign(id, m.user_id) })); }
+    if (canEdit && canDel) items.push({ sep: true });
+    if (canDel) items.push({ label: 'Delete card', danger: true, on: () => deleteCard(id) });
+    if (items.length) openMenu(x, y, items);
+  }
+  function projectMenu(pid, x, y) {
+    const owner = Store.get('projects', pid)?.owner === Store.me?.id;
+    openMenu(x, y, owner ? [{ label: 'Delete project', danger: true, on: () => deleteProject(pid) }] : [{ head: 'Only the owner can delete this project' }]);
+  }
+
+  // To-do: one column per person (plus "Unassigned"). Drag a card onto a person to assign it.
+  function todoView(pid, colors) {
+    const canEdit = Store.can(pid, 'edit_cards'), cards = Store.projectCards(pid), order = Object.keys(colors);
+    const col = (key, head, list) => `<div class="pj-col tile" data-person="${key}"><div class="pj-colhead">${head}<span class="chip">${list.length}</span></div>
+      <div class="pj-cards">${list.map(c => cardTile(c, canEdit, colors, true)).join('') || '<div class="p">Nothing here</div>'}</div></div>`;
+    return `<p class="p pj-hint">${canEdit ? 'Drag a card onto a person to give it to them. Right-click a card for more.' : 'Everyone’s cards.'}</p>
+      <div class="pj-sb" hidden><i></i></div>
+      <div class="pj-board">${col('none', '<b>Unassigned</b>', cards.filter(c => !c.assignees.length))}${order.map(u => col(u, `${ini(u, colors)}<b>@${esc(Store.username(u))}</b>`, cards.filter(c => c.assignees.includes(u)))).join('')}</div>`;
+  }
+  // People: everyone on the project, each with their own color
+  function peopleView(pid, colors) {
+    const p = Store.get('projects', pid), canInvite = Store.can(pid, 'invite'), cards = Store.projectCards(pid), inv = Store.projectInvites(pid), last = Store.steps(pid).slice(-1)[0]?.id;
+    return `<div class="pj-people">${canInvite ? '<div class="pj-row"><button class="tile pj-btn primary" data-act="people">Invite / manage people</button></div>' : ''}
+      <div class="pj-pgrid">${Store.members(pid).map(m => {
+        const mine = cards.filter(c => c.assignees.includes(m.user_id)), done = mine.filter(c => c.step_id === last).length;
+        return `<div class="tile pj-person" style="--pc:${colors[m.user_id]}">${ini(m.user_id, colors, true)}<div><div class="it">@${esc(Store.username(m.user_id))}${m.user_id === p.owner ? ' <span class="chip">Owner</span>' : ''}</div>
+          <div class="p">${esc(Store.get('roles', m.role_id)?.name || '')} · ${mine.length} card${mine.length === 1 ? '' : 's'}${mine.length ? ` · ${done} done` : ''}</div></div></div>`;
+      }).join('')}</div>
+      ${inv.length ? `<h4 class="pj-h">Pending invites</h4><div class="pj-pgrid">${inv.map(i => `<div class="tile pj-person"><span class="pj-ini big">?</span><div><div class="it">@${esc(i.username)}</div><div class="p">Invited as ${esc(Store.get('roles', i.role_id)?.name || 'member')}</div></div></div>`).join('')}</div>` : ''}</div>`;
+  }
+  // Slim scroll bar above the columns, only when they don't all fit
+  function boardScroll() {
+    const board = root?.querySelector('.pj-board'), sb = root?.querySelector('.pj-sb'), thumb = sb?.querySelector('i');
+    if (!board || !sb) return;
+    const sync = () => {
+      const over = board.scrollWidth > board.clientWidth + 2; sb.hidden = !over; if (!over) return;
+      const tw = sb.clientWidth, w = Math.max(36, tw * board.clientWidth / board.scrollWidth);
+      thumb.style.width = w + 'px'; thumb.style.transform = `translateX(${(tw - w) * (board.scrollLeft / (board.scrollWidth - board.clientWidth || 1))}px)`;
+    };
+    board.addEventListener('scroll', sync); sync(); new ResizeObserver(sync).observe(board);
+    const to = x => { const r = sb.getBoundingClientRect(), w = thumb.offsetWidth, f = Math.min(1, Math.max(0, (x - r.left - w / 2) / (r.width - w || 1))); board.scrollLeft = f * (board.scrollWidth - board.clientWidth); };
+    sb.addEventListener('pointerdown', e => { sb.setPointerCapture(e.pointerId); to(e.clientX); sb.onpointermove = ev => to(ev.clientX); sb.onpointerup = () => { sb.onpointermove = null; }; });
+  }
+
+  function cardTile(c, canMove, colors = {}, showStep = false) {
+    const nc = Store.comments(c.id).length, na = Store.attachments(c.id).length, lead = c.assignees.find(u => colors[u]);
+    return `<div class="tile pj-card${lead ? ' tinted' : ''}${showStep && typeof CardLink !== 'undefined' && CardLink.cardDone(c) ? ' done' : ''}" ${lead ? `style="--pc:${colors[lead]}"` : ''} data-act="card" data-id="${c.id}" ${canMove ? 'draggable="true"' : ''}>
+      <div class="pj-ctitle">${showStep && typeof CardLink !== 'undefined' ? `<button class="tm-check sm${CardLink.cardDone(c) ? ' on' : ''}" data-act="cardcheck" data-id="${c.id}" aria-label="Mark done">${CHECK}</button>` : ''}<span class="pj-ct">${esc(c.title)}</span><span class="pj-inis">${c.assignees.map(u => ini(u, colors)).join('')}</span></div>
       ${c.description ? `<div class="p pj-snip">${esc(c.description.slice(0, 120))}</div>` : ''}
-      <div class="pj-meta">${c.assignees.map(u => `<span class="pj-av" title="@${esc(Store.username(u))}">${initials(Store.username(u))}</span>`).join('')}
-        <span class="pj-spacer"></span>${na ? `<span class="p">📎 ${na}</span>` : ''}${nc ? `<span class="p">💬 ${nc}</span>` : ''}</div></div>`;
+      ${na || nc || showStep ? `<div class="pj-meta">${showStep ? `<span class="p">${esc(Store.get('steps', c.step_id)?.name || '')}</span>` : ''}<span class="pj-spacer"></span>${na ? `<span class="p">📎 ${na}</span>` : ''}${nc ? `<span class="p">💬 ${nc}</span>` : ''}</div>` : ''}</div>`;
   }
 
   // ---------- Modals ----------
@@ -313,7 +413,7 @@ const Projects = (() => {
     const send = () => { const t = el.querySelector('#cMsg'); if (t.value.trim()) { Store.comment(Store.get('cards', id), t.value.trim()); Store.note(pid, `commented on “${Store.get('cards', id).title}”: ${t.value.trim().slice(0, 80)}`); log(`Commented on “${Store.get('cards', id).title}”`); t.value = ''; } };
     el.querySelector('#cSend')?.addEventListener('click', send);
     el.querySelector('#cMsg')?.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
-    el.querySelector('#cDel')?.addEventListener('click', () => { if (confirm('Delete this card?')) { Store.note(pid, `deleted card “${Store.get('cards', id).title}”`); Store.remove('cards', id); closeModal(); } });
+    el.querySelector('#cDel')?.addEventListener('click', async () => { if (!(await deleteCard(id))) cardModal(id); });
     el.addEventListener('click', async e => {
       const t = e.target;
       if (t.dataset.unassign) Store.update('cards', id, { assignees: Store.get('cards', id).assignees.filter(u => u !== t.dataset.unassign) });
@@ -405,6 +505,7 @@ const Projects = (() => {
       else if (act === 'addstep') ask('New step', 'Step name (e.g. Review)', '', name => { Store.addStep(view.id, name); Store.note(view.id, `added step “${name}”`); });
       else if (act === 'delstep') { if (confirm('Delete this step and all its cards?')) { Store.note(view.id, `deleted step “${Store.get('steps', id).name}”`); Store.remove('steps', id); } }
       else if (act === 'addcard') ask('New card', 'Card title', '', name => { const nc = Store.addCard(view.id, id, name); if (view.tab === 'timeline' && view.tlPhase && !['all', 'none'].includes(view.tlPhase)) tlAssign(nc.id, view.tlPhase); Store.note(view.id, `added card “${name}” to ${Store.get('steps', id).name}`); log(`Added card “${name}”`); });
+      else if (act === 'cardcheck') CardLink.setCardDone(id, !CardLink.cardDone(Store.get('cards', id)));
       else if (act === 'card') cardModal(id);
       else if (act === 'people') peopleModal(view.id);
       else if (act === 'roles') rolesModal(view.id);
@@ -423,6 +524,14 @@ const Projects = (() => {
         if (msg && root.querySelector('#pjErr')) root.querySelector('#pjErr').textContent = msg;
       }
     });
+    root.addEventListener('contextmenu', e => {
+      const card = e.target.closest('.pj-card[data-id]'), proj = e.target.closest('.pj-proj[data-id]');
+      if (card) { e.preventDefault(); cardMenu(card.dataset.id, e.clientX, e.clientY); }
+      else if (proj) { e.preventDefault(); projectMenu(proj.dataset.id, e.clientX, e.clientY); }
+    });
+    document.addEventListener('pointerdown', e => { if (menuEl && !menuEl.contains(e.target)) closeMenu(); }, true);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+    addEventListener('blur', closeMenu);
     root.addEventListener('change', e => {
       const t = e.target;
       if (t.dataset.stepName && t.value.trim()) Store.update('steps', t.dataset.stepName, { name: t.value.trim() });
@@ -474,6 +583,11 @@ const Projects = (() => {
         if (col) { e.preventDefault(); col.classList.add('over'); }
         return;
       }
+      if (drag.type === 'card' && e.target.closest('[data-person]')) {
+        e.preventDefault();
+        root.querySelectorAll('.pj-col.over').forEach(c => c.classList.remove('over')); e.target.closest('[data-person]').classList.add('over');
+        return;
+      }
       if (drag.type === 'card') {
         const list = e.target.closest('[data-drop]') || e.target.closest('.pj-col')?.querySelector('[data-drop]');
         if (!list) return;
@@ -490,6 +604,15 @@ const Projects = (() => {
       }
     });
     root.addEventListener('drop', e => {
+      if (drag?.type === 'card' && e.target.closest('[data-person]')) {
+        e.preventDefault();
+        const who = e.target.closest('[data-person]').dataset.person, c = Store.get('cards', drag.id);
+        if (who === 'none' ? c.assignees.length : !(c.assignees.length === 1 && c.assignees[0] === who)) {
+          Store.update('cards', drag.id, { assignees: who === 'none' ? [] : [who] });
+          Store.note(c.project_id, who === 'none' ? `unassigned “${c.title}”` : `assigned “${c.title}” to @${Store.username(who)}`);
+        }
+        return;
+      }
       if (drag?.type === 'tcard') { const col = e.target.closest('[data-part]'); if (col) { e.preventDefault(); tlAssign(drag.id, col.dataset.part); } return; }
       if (!drag || !marker.parentElement) return;
       e.preventDefault();

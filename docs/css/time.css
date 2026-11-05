@@ -169,3 +169,15 @@ input[type="date"].pj-in, input[type="time"].pj-in { color-scheme: dark; }
 .cal-items { flex: 1 1 0; min-height: 0; overflow: hidden; }
 .cal-ev, .cal-tk { white-space: normal; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.25; flex-shrink: 0; }
 .cal-tk i { align-self: flex-start; margin-top: 3px; }
+
+/* Add Cards tray + sleep blocks */
+.cal-tray { overflow: hidden; }
+.cal-tray-list { flex: 1 1 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px; margin: -4px; }
+.cal-pc { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--r-md); cursor: grab; flex-shrink: 0; }
+.cal-pc .it { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-pc.done .it { color: var(--muted); text-decoration: line-through; }
+.cal-pc.placing { border-color: var(--icon-a); box-shadow: 0 0 0 2px rgba(201,167,255,.4) inset; }
+.cal-sleep { position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; display: flex; align-items: flex-start; justify-content: flex-end; padding: 6px 10px;
+  background: repeating-linear-gradient(135deg, rgba(120,90,190,.20) 0 10px, rgba(80,55,140,.26) 10px 20px); border-block: 1px solid rgba(201,167,255,.18); }
+.cal-sleep span { font-size: 11px; color: var(--muted); }
+.cal-block { z-index: 2; }

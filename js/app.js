@@ -39,7 +39,7 @@ function go(path) {
   moveIndicator();
   document.getElementById('dash').classList.toggle('on', tab === 'Dashboard');
   document.getElementById('page').classList.toggle('on', tab !== 'Dashboard');
-  document.querySelectorAll('.view').forEach(v => (v.scrollTop = 0)); // phone pages scroll: start each page at the top
+  document.querySelectorAll('.view').forEach(v => { v.scrollTop = 0; v.scrollLeft = 0; }); // phone pages scroll: start each page at the top
   if (tab === 'Dashboard') return;
   // Pages that are built; everything else shows "Nothing here yet"
   const MODULES = { Projects: ['projectsRoot', el => Projects.mount(el)], 'Time/Todo': ['todoRoot', el => TimeUI.Todo.mount(el)], 'Time/Calendar': ['calRoot', el => TimeUI.Calendar.mount(el)], Settings: ['settingsRoot', el => Account.mount(el)],

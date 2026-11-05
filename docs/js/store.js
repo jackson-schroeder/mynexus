@@ -94,6 +94,7 @@ const Store = (() => {
   let pulling = false, pullAgain = false;
   async function pull() {
     if (!sb || !me || !navigator.onLine) return;
+    if (queue.length) { flush(); return; } // local changes not sent yet: send them first (flush pulls when done), so a pull can never undo them
     if (pulling) { pullAgain = true; return; }
     pulling = true;
     try {
@@ -322,7 +323,7 @@ const Store = (() => {
   return {
     PERMS, cloud: !!sb, client: sb, get me() { return me; }, get status() { return queue.length && status === 'online' ? 'syncing' : status; }, get ready() { return status !== 'nosetup'; },
     subscribe: f => (listeners.add(f), () => listeners.delete(f)), start, signUp, signIn, signOut, requestCode, verifyCode, requestReset, resetPassword, resetEverything, kick: emit,
-    get, insert, update, remove, myProjects, steps, cards, projectCards, roles, members, comments, attachments,
+    get, insert, update, remove, myProjects, rows: t => db[t], steps, cards, projectCards, roles, members, comments, attachments,
     myInvites, projectInvites, note, updates, unread, markSeen, seenIds, milestones, get v2Missing() { return v2Missing; }, username, initials, can, progress, startProject, addStep, addCard, moveCard, moveStep, comment,
     invite, findUser, acceptInvite, attach, fileUrl, removeAttachment
   };

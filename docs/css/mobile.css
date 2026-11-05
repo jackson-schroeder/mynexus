@@ -171,3 +171,26 @@ html.phone .set-subs { grid-template-columns: minmax(0, 1fr); }
 html.phone .p, html.phone .it { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
 html.phone .fx-split.lift .fx-prs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 html.phone .fx-split.lift .fx-pr .p { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* search: tap the bar and it takes the whole top row; results show the section only, full width, nothing cut */
+html.phone.searching .brand h1, html.phone.searching .right { display: none; }
+html.phone.searching .brand { margin-right: 0; }
+html.phone .search-pop { max-height: 70vh; }
+html.phone .search-kind { display: none; }
+html.phone .search-row { grid-template-columns: 1fr; gap: 2px; padding: 10px 12px; }
+html.phone .search-title { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; font-size: 16px; }
+html.phone .search-sub { white-space: normal; }
+
+/* project tabs (5 of them) swipe sideways inside their own row; day panel buttons wrap */
+html.phone .pj-ptabs { max-width: 100%; overflow-x: auto; scrollbar-width: none; margin-left: 0; flex-shrink: 1; min-width: 0; }
+html.phone .pj-ptabs::-webkit-scrollbar { display: none; }
+html.phone .pj-ptabs button { flex-shrink: 0; }
+html.phone .cal-day .pj-row, html.phone .cal-tray .pj-row { flex-wrap: wrap; }
+html.phone .cal-tray-list { max-height: 60vh; flex: none; }
+html.phone .pj-ctab { flex: 1 1 100%; }
+html.phone .pj-person { padding: 12px 14px; }
+html.phone .pj-pgrid { grid-template-columns: minmax(0, 1fr); }
+html.phone .pj-menu { max-width: calc(100vw - 16px); }
+html.phone .tl-setup { flex-wrap: wrap; justify-content: flex-start; }
+html.phone .tl-setup label, html.phone .tl-bar label { flex: 1 1 100%; justify-content: space-between; }
+html.phone .tl-setup .pj-in[type="date"], html.phone .tl-bar .pj-in[type="date"] { flex: 1; max-width: 200px; }

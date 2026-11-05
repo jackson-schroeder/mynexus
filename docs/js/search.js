@@ -43,10 +43,15 @@ const Search = (() => {
     setting('Tabs', 'hide show turn off remove add back sections'),
     setting('Demo data', 'example sample dummy fake data'),
     action('Log workout', 'myLifting', 'add workout train push pull legs split', () => FitnessUI.openLog('workout')),
+    setting('Recycle bin', 'deleted trash restore recover undelete projects cards 30 days bin'),
+    section('Project to-do', 'Projects', 'myProjects', 'todo to-do assign cards people person who'),
+    section('Project people', 'Projects', 'myProjects', 'people members team invite colors owner'),
     section('Project timeline', 'Projects', 'myProjects', 'timeline weeks phases portions start end date schedule assign cards my cards all cards'),
     section('Project updates', 'Projects', 'myProjects', 'updates activity feed unread news changes message chat conversation group send'),
     section('Weekly miles', 'Fitness/Running', 'myRunning', 'running chart miles per week 3 month year'),
     action('Take the tour', 'myNexus', 'tour walkthrough help guide tutorial welcome how it works', () => Tour.start()),
+    action('Add cards to calendar', 'myCalendar', 'project cards todo drag schedule place add cards', () => TimeUI.Calendar.openTray()),
+    action('Set sleep time', 'myCalendar', 'sleep bedtime wake up block rest night', () => go('Time/Calendar')),
     action('Log meal', 'myDiet', 'log food eat ate meal breakfast lunch dinner snack', () => { go('Fitness/Diet'); DietUI.logMeal(); }),
     action('Add meal', 'myDiet', 'create new custom meal recipe ingredients macros', () => { go('Fitness/Diet'); DietUI.addMeal(); }),
     action('Build a smoothie', 'myDiet', 'smoothie shake blend fruit protein', () => { go('Fitness/Diet'); DietUI.smoothie(); }),
@@ -93,7 +98,10 @@ const Search = (() => {
   pop.hidden = true;
   document.body.appendChild(pop);
   let results = [], sel = 0;
-  function place() { const r = input.closest('.search').getBoundingClientRect(); Object.assign(pop.style, { left: r.left + 'px', top: r.bottom + 8 + 'px', width: r.width + 'px' }); }
+  function place() {
+    const r = input.closest('.search').getBoundingClientRect(), phone = document.documentElement.classList.contains('phone'); // on a phone the list uses the full width
+    Object.assign(pop.style, { left: (phone ? 14 : r.left) + 'px', top: r.bottom + 8 + 'px', width: (phone ? innerWidth - 28 : r.width) + 'px' });
+  }
   function show() {
     results = find(input.value);
     sel = Math.min(sel, Math.max(0, results.length - 1));
@@ -111,7 +119,7 @@ const Search = (() => {
     r.go();
   }
   input.addEventListener('input', () => { sel = 0; show(); });
-  input.addEventListener('focus', show);
+  input.addEventListener('focus', () => { document.documentElement.classList.add('searching'); show(); });
   input.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + results.length) % Math.max(1, results.length); show(); }
     else if (e.key === 'Enter') choose(sel);
@@ -119,7 +127,7 @@ const Search = (() => {
   });
   pop.addEventListener('pointerdown', e => { const b = e.target.closest('[data-i]'); if (b) { e.preventDefault(); choose(+b.dataset.i); } });
   pop.addEventListener('pointermove', e => { const b = e.target.closest('[data-i]'); if (b && +b.dataset.i !== sel) { sel = +b.dataset.i; pop.querySelectorAll('.search-row').forEach((x, i) => x.classList.toggle('on', i === sel)); } });
-  input.addEventListener('blur', () => setTimeout(() => (pop.hidden = true), 120));
+  input.addEventListener('blur', () => setTimeout(() => { pop.hidden = true; document.documentElement.classList.remove('searching'); }, 120));
   addEventListener('resize', () => !pop.hidden && place());
   // Ctrl+K (or "/") jumps to search from anywhere
   addEventListener('keydown', e => {

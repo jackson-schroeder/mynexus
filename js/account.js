@@ -1,7 +1,8 @@
 // mySettings: Account card + Tabs card.
 // Account: one myNexus account (Supabase) for everything — myProjects, myTodo, myCalendar, myRecents.
 const Account = (() => {
-  let root = null, mode = 'in', email = '', resetAsk = false;
+  let root = null, mode = 'in', email = '', resetAsk = false, binMsg = '';
+  const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'today' : d === 1 ? 'yesterday' : d + ' days ago'; };
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   function mount(el) {
     if (root !== el) { root = el; root.innerHTML = '<div class="set-wrap"><div id="acBox"></div><div id="tabsBox"></div></div>'; bind(); }
@@ -46,7 +47,8 @@ const Account = (() => {
       <div class="ac-sync">${st.map(([l, v, ok]) => `<div class="tile ac-row"><span class="ac-dot${ok ? ' ok' : ''}"></span><div><div class="it">${l}</div><div class="p">${v}</div></div></div>`).join('')}</div>
       <div class="pj-row"><span class="p">Signed in on this computer. Use the same email and password on your phone.</span><span class="pj-spacer"></span><button class="tile pj-btn" data-signout>Sign out</button></div>
       ${resetAsk ? `<div class="ac-danger"><p class="p">This permanently deletes ALL your tasks, calendar, fitness and diet logs, settings and every project you own (your friends lose those projects too). It can't be undone. Type <b>RESET</b> to confirm.</p><div class="pj-row"><input class="pj-in" id="acResetIn" placeholder="RESET" autocomplete="off"><button class="tile pj-btn danger" data-reset-go>Delete everything</button><button class="tile pj-btn" data-reset-cancel>Cancel</button></div><div class="pj-err" id="acResetErr"></div></div>` : `<div class="pj-row"><span class="p">Start over with a clean account.</span><span class="pj-spacer"></span><button class="tile pj-btn danger" data-reset-ask>Reset all my data</button></div>`}
-    </div>`;
+    </div>${typeof Bin === 'undefined' ? '' : binCard()}
+    <div class="surface ac-card"><div class="pj-row"><span class="p">Replay the walkthrough of what everything does.</span><span class="pj-spacer"></span><button class="tile pj-btn" data-tour>Take the tour</button></div></div>`;
     if (!email) loadEmail();
   }
 
@@ -62,8 +64,18 @@ const Account = (() => {
         ${subs.length ? `<div class="set-subs${hidden.includes(t) ? ' off' : ''}">${subs.map(sb => tgl(t + '/' + sb, !hidden.includes(t + '/' + sb), sb, true)).join('')}</div>` : ''}</div>`).join('')}</div></div>
       <div class="surface ac-card"><h2><span class="my">my</span><span class="nm">Demo</span></h2>
         <p class="p">Show example data anywhere you haven't logged anything yet. It's never saved to your account, and it disappears for a feature as soon as you add something real.</p>
-        <label class="pj-perm set-tab"><input type="checkbox" data-demotoggle ${Personal.demoOn ? 'checked' : ''}><span class="pj-toggle"></span>Show demo data</label></div>
-      <div class="surface ac-card"><h2><span class="my">my</span><span class="nm">Tour</span></h2><p class="p">A quick walkthrough of what everything does.</p><div class="pj-row"><button class="tile pj-btn primary" data-tour>Take the tour</button></div></div>`;
+        <label class="pj-perm set-tab"><input type="checkbox" data-demotoggle ${Personal.demoOn ? 'checked' : ''}><span class="pj-toggle"></span>Show demo data</label></div>`;
+
+  }
+
+  // Recycle bin: projects and cards you deleted on purpose, kept 30 days
+  function binCard() {
+    const list = Bin.list();
+    return `<div class="surface ac-card"><h2><span class="my">my</span><span class="nm">Bin</span></h2>
+      <p class="p">Recycle bin. Projects and cards you delete stay here for 30 days, then they're gone for good.</p>
+      ${binMsg ? `<div class="pj-err">${esc(binMsg)}</div>` : ''}
+      <div class="bin-list">${list.length ? list.map(e => `<div class="tile ac-row bin-row"><div class="bin-info"><div class="it">${esc(e.name)}</div><div class="p">${e.kind === 'project' ? 'Project' : 'Card in ' + esc(e.projectName || 'a project')} · deleted ${when(e.at)} · ${Bin.left(e)} days left</div></div>
+        <span class="pj-spacer"></span><button class="tile pj-btn" data-bin-restore="${e.id}">Restore</button><button class="pj-x" data-bin-purge="${e.id}" title="Delete forever">×</button></div>`).join('') : '<p class="p">Nothing here.</p>'}</div></div>`;
   }
 
   function bind() {
@@ -77,10 +89,12 @@ const Account = (() => {
       e.target.blur();
     });
     root.addEventListener('click', async e => {
-      const t = e.target.closest('[data-mode],[data-go-auth],[data-signout],[data-reset-ask],[data-reset-go],[data-reset-cancel]');
+      const t = e.target.closest('[data-mode],[data-go-auth],[data-signout],[data-reset-ask],[data-reset-go],[data-reset-cancel],[data-bin-restore],[data-bin-purge]');
       if (!t) return;
       if (t.dataset.mode) { mode = t.dataset.mode; render(); }
       else if ('signout' in t.dataset) { email = ''; await Store.signOut(); }
+      else if ('binRestore' in t.dataset) { binMsg = Bin.restore(t.dataset.binRestore); render(); }
+      else if ('binPurge' in t.dataset) { if (confirm('Delete this forever? It cannot be recovered.')) { binMsg = ''; Bin.purge(t.dataset.binPurge); render(); } }
       else if ('resetAsk' in t.dataset) { resetAsk = true; render(); }
       else if ('resetCancel' in t.dataset) { resetAsk = false; render(); }
       else if ('resetGo' in t.dataset) {

@@ -64,14 +64,15 @@ const Personal = (() => {
     logActivity('Time/Todo', `Added task “${task.title}”`);
     return task;
   }
-  const updateTask = (id, patch) => update('tasks', id, patch);
+  const updateTask = (id, patch) => { update('tasks', id, patch); if ('done' in patch && typeof CardLink !== 'undefined') CardLink.taskChanged(id); };
   function toggleTask(id) {
     const t = db.tasks.find(x => x.id === id);
     if (!t) return;
     update('tasks', id, { done: !t.done, doneAt: !t.done ? Date.now() : null });
+    if (typeof CardLink !== 'undefined') CardLink.taskChanged(id); // a linked project card follows
     if (t.done) logActivity('Time/Todo', `Completed “${t.title}”`);
   }
-  const removeTask = id => remove('tasks', id);
+  const removeTask = id => { remove('tasks', id); if (typeof CardLink !== 'undefined') CardLink.taskRemoved(id); };
   const clearCompleted = () => db.tasks.filter(t => t.done).forEach(t => remove('tasks', t.id));
 
   // Events: { id, title, notes, date, allDay, start 'HH:MM', end 'HH:MM', color 1-5 }
