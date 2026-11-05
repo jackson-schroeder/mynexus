@@ -7,13 +7,18 @@ const CardLink = (() => {
   const forCard = cid => get().find(l => l.cardId === cid);
   const forTask = tid => get().find(l => l.taskId === tid);
   const realTask = id => Personal.tasks.find(t => t.id === id);
-  const lastStep = pid => Store.steps(pid).slice(-1)[0], firstStep = pid => Store.steps(pid)[0];
-  const cardDone = c => !!c && lastStep(c.project_id)?.id === c.step_id;
+  const DONE_RE = /^(done|complete(d)?|finished)$/i;
+  const lastStep = pid => Store.steps(pid).slice(-1)[0];
+  const doneSteps = pid => Store.steps(pid).filter(s => DONE_RE.test(s.name.trim()));
+  const cardDone = c => { if (!c) return false; const ds = doneSteps(c.project_id); return ds.length ? ds.some(s => s.id === c.step_id) : lastStep(c.project_id)?.id === c.step_id; };
+  const group = (pid, sid) => (typeof Projects !== 'undefined' ? Projects.stepGroup(pid, sid) : ''); // which phase a table belongs to ('' = none)
+  const doneStepFor = c => { const ds = doneSteps(c.project_id), g = group(c.project_id, c.step_id); return ds.find(s => group(c.project_id, s.id) === g) || ds.find(s => !group(c.project_id, s.id)) || ds[0] || lastStep(c.project_id); };
+  const reopenStepFor = c => { const g = group(c.project_id, c.step_id), same = Store.steps(c.project_id).filter(s => group(c.project_id, s.id) === g && !DONE_RE.test(s.name.trim())); return same[0] || Store.steps(c.project_id).find(s => !DONE_RE.test(s.name.trim())) || Store.steps(c.project_id)[0]; };
 
   // Complete / reopen a card by moving it to the last / first step
   function setCardDone(cardId, done) {
     const c = Store.get('cards', cardId); if (!c || cardDone(c) === done) return;
-    const st = done ? lastStep(c.project_id) : firstStep(c.project_id);
+    const st = done ? doneStepFor(c) : reopenStepFor(c);
     if (!st || st.id === c.step_id) return;
     Store.moveCard(c.id, st.id, Store.cards(st.id).length);
     Store.note(c.project_id, `${done ? 'completed' : 'reopened'} “${c.title}”`);

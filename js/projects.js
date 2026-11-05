@@ -94,15 +94,15 @@ const Projects = (() => {
     const p = Store.get('projects', pid);
     const canSteps = Store.can(pid, 'edit_steps'), canCards = Store.can(pid, 'create_cards'), canMove = Store.can(pid, 'move_cards');
     const colors = userColors(pid);
-    const inTl = view.tab === 'timeline' && view.tlPhase, phaseSet = inTl ? phaseIds(pid, view.tlPhase) : null;
-    const cols = Store.steps(pid).map(s => {
-      const cs = Store.cards(s.id).filter(c => !phaseSet || phaseSet.has(c.id));
+    const inTl = view.tab === 'timeline' && view.tlPhase, shownSteps = inTl ? phaseSteps(pid, view.tlPhase) : Store.steps(pid);
+    const cols = shownSteps.map(s => {
+      const cs = Store.cards(s.id), ph = !inTl && stepPhase(pid, s.id);
       return `<div class="pj-col tile" data-step="${s.id}">
         <div class="pj-colhead" ${canSteps ? 'draggable="true"' : ''} data-dragstep="${s.id}">
           <textarea class="pj-stepname" rows="1" data-grow data-step-name="${s.id}" ${canSteps ? '' : 'readonly'}>${esc(s.name)}</textarea>
           <span class="chip">${cs.length}</span>
-          ${canSteps ? `<button class="pj-x" data-act="delstep" data-id="${s.id}" title="Delete step">×</button>` : ''}
-        </div>
+          ${canSteps ? `<button class="pj-x" data-act="delstep" data-id="${s.id}" title="Delete table">×</button>` : ''}
+        </div>${ph ? `<div class="p pj-phtag">${esc(ph.name)}</div>` : ''}
         <div class="pj-cards" data-drop="${s.id}">${cs.map(c => cardTile(c, canMove, colors)).join('')}</div>
         ${canCards ? `<button class="tile pj-btn pj-add" data-act="addcard" data-id="${s.id}">+ Add card</button>` : ''}
       </div>`;
@@ -111,8 +111,8 @@ const Projects = (() => {
     const tabs = `<div class="td-seg pj-ptabs">${[['cards', 'Cards'], ['timeline', 'Timeline'], ['updates', 'Updates'], ['todo', 'To-do'], ['people', 'People'], ...(Store.can(pid, 'manage_roles') ? [['roles', 'Roles']] : [])].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="ptab" data-tab="${k}">${l}${k === 'updates' && nUnread ? ` <span class="pj-badge">${nUnread}</span>` : ''}</button>`).join('')}</div>`;
     return `${bar(`<button class="tile pj-btn" data-act="back">← All projects</button>${tabs}
         ${picImg(pid)}${tab === 'cards' ? '<h3 class="pj-ctab">All Project cards</h3>' : `<textarea class="pj-title" rows="1" data-grow data-project-name="${pid}" ${Store.can(pid, 'manage_roles') ? '' : 'readonly'}>${esc(p.name)}</textarea>`}`)}
-      ${tab === 'roles' && Store.can(pid, 'manage_roles') ? rolesView(pid) : tab === 'people' ? peopleView(pid, colors) : tab === 'todo' ? todoView(pid, colors) : tab === 'timeline' && !inTl ? timelineView(pid) : tab === 'updates' ? updatesView(pid) : `${inTl ? `<div class="pj-row"><button class="tile pj-btn" data-act="tlback">← Timeline</button><h3>${esc(phaseName(pid, view.tlPhase))}</h3></div>` : ''}<div class="pj-sb" hidden><i></i></div><div class="pj-board" data-board="${pid}">${cols}
-        ${canSteps ? `<button class="tile pj-col pj-newstep" data-act="addstep">+ Add step</button>` : ''}</div>`}`;
+      ${tab === 'roles' && Store.can(pid, 'manage_roles') ? rolesView(pid) : tab === 'people' ? peopleView(pid, colors) : tab === 'todo' ? todoView(pid, colors) : tab === 'timeline' && !inTl ? timelineView(pid) : tab === 'updates' ? updatesView(pid) : `${inTl ? `<div class="pj-row"><button class="tile pj-btn" data-act="tlback">← Timeline</button><h3>${esc(phaseName(pid, view.tlPhase))}</h3></div>` : ''}<div class="pj-sb" hidden><i></i></div>${inTl && !shownSteps.length ? '<p class="p pj-hint">No card tables in this phase yet. Add one below, then add cards to it.</p>' : ''}<div class="pj-board" data-board="${pid}">${cols}
+        ${canSteps ? `<button class="tile pj-col pj-newstep" data-act="addstep">+ Add table</button>` : ''}</div>`}`;
   }
 
   // Timeline: a start → finish range split into weeks. Drag across weeks to group them into bigger portions,
@@ -143,14 +143,11 @@ const Projects = (() => {
         ${canEdit ? `<div class="pj-row tl-setup"><label class="p">Start <input class="pj-in" type="date" id="tlStart" value="${today}"></label><label class="p">Finish <input class="pj-in" type="date" id="tlEnd" value="${addDays(today, 55)}"></label><button class="tile pj-btn primary" data-act="tlcreate">Create timeline</button></div>` : '<p class="p">Ask someone who can edit cards to set it up.</p>'}</div></div>`;
     const me = Store.me?.id, mine = view.tlMine;
     const cards = Store.projectCards(pid).filter(c => !mine || c.assignees.includes(me));
-    const where = c => { const l = t.links.find(l => l.title === '§card|' + c.id); return l && t.portions.find(p => l.due >= p.start && l.due <= p.end); };
-    const chip = c => `<div class="tile tl-card" data-act="card" data-id="${c.id}" data-tcard="${c.id}" ${canEdit ? 'draggable="true"' : ''}><span class="it">${esc(c.title)}</span>
-      ${c.assignees.map(u => `<span class="pj-av" title="@${esc(Store.username(u))}">${initials(Store.username(u))}</span>`).join('')}</div>`;
-    const lastStep = Store.steps(pid).slice(-1)[0]?.id;
+    const cardsOf = key => phaseSteps(pid, key).flatMap(st => Store.cards(st.id)).filter(c => !mine || c.assignees.includes(me));
     const tile = (key, name, dates, list, now) => {
-      const yours = list.filter(c => c.assignees.includes(me)).length, done = list.filter(c => c.step_id === lastStep).length;
+      const yours = list.filter(c => c.assignees.includes(me)).length, done = list.filter(c => CardLink.cardDone(c)).length, nt = phaseSteps(pid, key).length;
       return `<div class="tile tl-phase${now ? ' now' : ''}" data-act="tlphase" data-id="${key}"><b>${esc(name)}</b><div class="p">${dates}</div>
-        <div class="pj-row"><div class="prog"><b style="width:${list.length ? Math.round(done / list.length * 100) : 0}%"></b></div><span class="p">${list.length} card${list.length === 1 ? '' : 's'}${yours ? ` · ${yours} yours` : ''}</span></div></div>`;
+        <div class="p">${nt} table${nt === 1 ? '' : 's'}</div><div class="pj-row"><div class="prog"><b style="width:${list.length ? Math.round(done / list.length * 100) : 0}%"></b></div><span class="p">${list.length} card${list.length === 1 ? '' : 's'}${yours ? ` · ${yours} yours` : ''}</span></div></div>`;
     };
     const W = t.weeks.length, pos = d => Math.min(100, Math.max(0, (new Date(d + 'T12:00') - new Date(t.start + 'T12:00')) / DAY / ((new Date(t.end + 'T12:00') - new Date(t.start + 'T12:00')) / DAY + 1) * 100));
     return `<div class="pj-tl">${v2}
@@ -165,14 +162,20 @@ const Projects = (() => {
         <div class="tl-weeks">${t.weeks.map((w, k) => `<div class="tl-wk${today >= w.start && today <= w.end ? ' now' : ''}" data-wk="${k}" title="Week ${k + 1} · ${fmtD(w.start)} – ${fmtD(w.end)}">${k === 0 || w.start.slice(5, 7) !== t.weeks[k - 1].start.slice(5, 7) ? `<em>${new Date(w.start + 'T12:00').toLocaleDateString(undefined, { month: 'short' })}</em>` : ''}</div>`).join('')}
           ${today >= t.start && today <= t.end ? `<div class="pj-today" style="left:${pos(today)}%"><span>Today</span></div>` : ''}</div></div>
       <h3 class="pj-h">Phases</h3>
-      <div class="tl-cols">${tile('all', 'Entire project', `${fmtD(t.start)} – ${fmtD(t.end)}`, cards)}${t.portions.map(p => tile(p.start, p.name, `${fmtD(p.start)} – ${fmtD(p.end)}`, cards.filter(c => where(c) === p), today >= p.start && today <= p.end)).join('')}${tile('none', 'Not placed yet', 'No phase', cards.filter(c => !where(c)))}</div></div>`;
+      <div class="tl-cols">${tile('all', 'Entire project', `${fmtD(t.start)} – ${fmtD(t.end)}`, cardsOf('all'))}${t.portions.map(p => tile(p.start, p.name, `${fmtD(p.start)} – ${fmtD(p.end)}`, cardsOf(p.start), today >= p.start && today <= p.end)).join('')}${tile('none', 'No phase yet', 'Tables not in a phase', cardsOf('none'))}</div></div>`;
   }
-  function phaseIds(pid, key) { // ids of cards in a phase; null = the whole project
-    if (!key || key === 'all') return null;
-    const t = tlData(pid), p = t.portions.find(p => p.start === key), inP = c => { const l = t.links.find(l => l.title === '§card|' + c.id); return !!l && !!p && l.due >= p.start && l.due <= p.end; };
-    return new Set(Store.projectCards(pid).filter(c => key === 'none' ? !t.links.some(l => l.title === '§card|' + c.id) : inP(c)).map(c => c.id));
+  // A card table (step) can belong to a phase: stored as "§tbl|<stepId>" with a day inside that phase. Phases are containers; the tables inside them hold the cards.
+  const tblRow = sid => Store.rows('milestones').find(m => m.title === '§tbl|' + sid);
+  function stepPhase(pid, sid) {
+    const l = tblRow(sid), t = l && tlData(pid);
+    return (t?.portions || []).find(p => l.due >= p.start && l.due <= p.end) || null;
   }
-  function phaseName(pid, key) { return key === 'all' ? 'Entire project' : key === 'none' ? 'Not placed yet' : tlData(pid).portions.find(p => p.start === key)?.name || 'Phase'; }
+  function phaseSteps(pid, key) { // the tables shown for a phase ('all' = every table, 'none' = tables in no phase)
+    const steps = Store.steps(pid);
+    if (!key || key === 'all') return steps;
+    return steps.filter(st => { const p = stepPhase(pid, st.id); return key === 'none' ? !p : p?.start === key; });
+  }
+  function phaseName(pid, key) { return key === 'all' ? 'Entire project' : key === 'none' ? 'No phase yet' : tlData(pid).portions.find(p => p.start === key)?.name || 'Phase'; }
   function tlGroup(a, b) { // weeks a..b (indices) become one portion, swallowing any portion they touch
     const t = tlData(view.id); let lo = t.weeks[Math.min(a, b)].start, hi = t.weeks[Math.max(a, b)].end;
     const hit = t.parts.filter(p => p.start <= hi && p.end >= lo);
@@ -181,16 +184,6 @@ const Projects = (() => {
     Store.insert('milestones', { project_id: view.id, title: '§part|' + lo + '|' + name, due: hi, done: false, created_by: Store.me.id, created_at: new Date().toISOString() });
     Store.note(view.id, 'grouped ' + fmtD(lo) + ' – ' + fmtD(hi) + ' into “' + name + '”');
   }
-  function tlAssign(cid, day) {
-    const t = tlData(view.id), l = t.links.find(l => l.title === '§card|' + cid), c = Store.get('cards', cid);
-    if (!day) { if (l) Store.remove('milestones', l.id); return; }
-    if (l) Store.update('milestones', l.id, { due: day });
-    else Store.insert('milestones', { project_id: view.id, title: '§card|' + cid, due: day, done: false, created_by: Store.me.id, created_at: new Date().toISOString() });
-    const p = t.portions.find(p => day >= p.start && day <= p.end);
-    if (p) Store.note(view.id, 'put “' + c.title + '” in ' + p.name);
-  }
-
-
 
   // Updates: only unread ones first. Scrolling marks the ones you actually saw; they clear when you leave this tab.
   // Updates are also a group conversation: messages are stored as updates whose text starts with "msg:".
@@ -381,10 +374,10 @@ const Projects = (() => {
   }
   // People: everyone on the project, each with their own color
   function peopleView(pid, colors) {
-    const p = Store.get('projects', pid), canInvite = Store.can(pid, 'invite'), cards = Store.projectCards(pid), inv = Store.projectInvites(pid), last = Store.steps(pid).slice(-1)[0]?.id;
+    const p = Store.get('projects', pid), canInvite = Store.can(pid, 'invite'), cards = Store.projectCards(pid), inv = Store.projectInvites(pid);
     return `<div class="pj-people">${canInvite ? '<div class="pj-row"><button class="tile pj-btn primary" data-act="people">Invite / manage people</button></div>' : ''}
       <div class="pj-pgrid">${Store.members(pid).map(m => {
-        const mine = cards.filter(c => c.assignees.includes(m.user_id)), done = mine.filter(c => c.step_id === last).length;
+        const mine = cards.filter(c => c.assignees.includes(m.user_id)), done = mine.filter(c => CardLink.cardDone(c)).length;
         return `<div class="tile pj-person" style="--pc:${colors[m.user_id]}">${ini(m.user_id, colors, true)}<div><div class="it">@${esc(Store.username(m.user_id))}${m.user_id === p.owner ? ' <span class="chip">Owner</span>' : ''}</div>
           <div class="p">${esc(Store.get('roles', m.role_id)?.name || '')} · ${mine.length} card${mine.length === 1 ? '' : 's'}${mine.length ? ` · ${done} done` : ''}</div></div></div>`;
       }).join('')}</div>
@@ -452,7 +445,7 @@ const Projects = (() => {
     const el = openModal(`
       <div class="pj-row">
         <textarea class="pj-in pj-ctitlein" id="cTitle" rows="1" data-grow ${ro}>${esc(c.title)}</textarea><button class="pj-x" data-act="close">×</button></div>
-      <div class="pj-row"><div class="p" id="cStep"></div>${Store.can(pid, 'move_cards') ? '<select class="pj-in" id="cMove" style="width:auto" aria-label="Move to step"></select>' : ''}${canEdit && tlData(pid).range ? '<span class="pj-spacer"></span><select class="pj-in" id="cPhase" style="width:auto"></select>' : ''}</div>
+      <div class="pj-row"><div class="p" id="cStep"></div>${Store.can(pid, 'move_cards') ? '<select class="pj-in" id="cMove" style="width:auto" aria-label="Move to table"></select>' : ''}</div>
       <h4>People</h4><div class="pj-row wrap" id="cPeople"></div>
       ${canEdit ? `<input class="pj-in" id="cAssign" data-at value="@" aria-label="Assign a person" list="cMembers" autocapitalize="none"><datalist id="cMembers">${Store.members(pid).map(m => `<option value="@${esc(Store.username(m.user_id))}">`).join('')}</datalist>` : ''}
       <h4>Description</h4><textarea class="pj-in pj-desc" id="cDesc" placeholder="Add as much detail as you want…" ${ro}>${esc(c.description)}</textarea>
@@ -464,11 +457,9 @@ const Projects = (() => {
       () => {
         const cur = Store.get('cards', id);
         if (!cur) return closeModal();
-        el.querySelector('#cStep').textContent = 'In ' + (Store.get('steps', cur.step_id)?.name || '');
+        el.querySelector('#cStep').textContent = 'In ' + (Store.get('steps', cur.step_id)?.name || '') + (stepPhase(pid, cur.step_id) ? ' · ' + stepPhase(pid, cur.step_id).name : '');
         const mv = el.querySelector('#cMove');
-        if (mv && document.activeElement !== mv) mv.innerHTML = Store.steps(pid).map(st => `<option value="${st.id}" ${st.id === cur.step_id ? 'selected' : ''}>${esc(st.name)}</option>`).join('');
-        const ph = el.querySelector('#cPhase');
-        if (ph && document.activeElement !== ph) { const t = tlData(pid), l = t.links.find(l => l.title === '§card|' + id), at = l && t.portions.find(p => l.due >= p.start && l.due <= p.end); ph.innerHTML = '<option value="">No phase</option>' + t.portions.map(p => `<option value="${p.start}" ${at === p ? 'selected' : ''}>${esc(p.name)}</option>`).join(''); }
+        if (mv && document.activeElement !== mv) mv.innerHTML = Store.steps(pid).map(st => { const ph = stepPhase(pid, st.id); return `<option value="${st.id}" ${st.id === cur.step_id ? 'selected' : ''}>${esc(st.name)}${ph ? ' · ' + esc(ph.name) : ''}</option>`; }).join('');
         el.querySelector('#cPeople').innerHTML = cur.assignees.map(u => `<span class="chip pj-person">@${esc(Store.username(u))}${canEdit ? ` <button class="pj-x" data-unassign="${u}">×</button>` : ''}</span>`).join('') || '<span class="p">Nobody yet</span>';
         el.querySelector('#cFiles').innerHTML = Store.attachments(id).map(a => `<div class="row tile pj-fileitem" data-file="${a.id}"><div><div class="it">${esc(a.name)}</div><div class="p">${size(a.size)} · @${esc(Store.username(a.uploaded_by))}</div></div><div class="r">Open</div>${a.uploaded_by === Store.me.id || Store.can(pid, 'delete_cards') ? `<button class="pj-x" data-delfile="${a.id}">×</button>` : ''}</div>`).join('') || '<span class="p">No files</span>';
         el.querySelector('#cComments').innerHTML = Store.comments(id).map(m => `<div class="pj-comment"><div class="p">@${esc(Store.username(m.user_id))} · ${ago(m.created_at)}${m.user_id === Store.me.id ? ` <button class="pj-x" data-delcomment="${m.id}">×</button>` : ''}</div><div class="it">${esc(m.body)}</div></div>`).join('') || '<span class="p">No comments yet</span>';
@@ -478,7 +469,6 @@ const Projects = (() => {
     grow(); desc.addEventListener('input', grow);
     if (canEdit) {
       el.querySelector('#cMove')?.addEventListener('change', e => { const to = e.target.value, c2 = Store.get('cards', id); if (to === c2.step_id) return; Store.moveCard(id, to, Store.cards(to).length); Store.note(pid, `moved “${c2.title}” to ${Store.get('steps', to).name}`); });
-      el.querySelector('#cPhase')?.addEventListener('change', e => tlAssign(id, e.target.value));
       el.querySelector('#cTitle').addEventListener('change', e => e.target.value.trim() && Store.update('cards', id, { title: e.target.value.trim() }));
       desc.addEventListener('change', () => Store.update('cards', id, { description: desc.value }));
       el.querySelector('#cAssign').addEventListener('keydown', e => {
@@ -604,9 +594,13 @@ const Projects = (() => {
       else if (act === 'tlsplit') { const p = tlData(view.id).parts.find(p => p.id === id); Store.remove('milestones', id); Store.note(view.id, 'split “' + p.name + '” back into weeks'); }
       else if (act === 'accept') { const inv = Store.get('invites', id); Store.acceptInvite(inv); setTimeout(() => Store.note(inv.project_id, 'joined the project'), 50); }
       else if (act === 'decline') Store.remove('invites', id);
-      else if (act === 'addstep') ask('New step', 'Step name (e.g. Review)', '', name => { Store.addStep(view.id, name); Store.note(view.id, `added step “${name}”`); });
-      else if (act === 'delstep') { if (confirm('Delete this step and all its cards?')) { Store.note(view.id, `deleted step “${Store.get('steps', id).name}”`); Store.remove('steps', id); } }
-      else if (act === 'addcard') ask('New card', 'Card title', '', name => { const nc = Store.addCard(view.id, id, name); if (view.tab === 'timeline' && view.tlPhase && !['all', 'none'].includes(view.tlPhase)) tlAssign(nc.id, view.tlPhase); Store.note(view.id, `added card “${name}” to ${Store.get('steps', id).name}`); log(`Added card “${name}”`); });
+      else if (act === 'addstep') ask('New card table', 'Table name (e.g. Review)', '', name => {
+        const st = Store.addStep(view.id, name), key = view.tab === 'timeline' && view.tlPhase, inPhase = key && !['all', 'none'].includes(key);
+        if (inPhase) Store.insert('milestones', { project_id: view.id, title: '§tbl|' + st.id, due: key, done: false, created_by: Store.me.id, created_at: new Date().toISOString() });
+        Store.note(view.id, `added table “${name}”${inPhase ? ' to ' + phaseName(view.id, key) : ''}`);
+      });
+      else if (act === 'delstep') { if (confirm('Delete this table and all its cards?')) { Store.note(view.id, `deleted table “${Store.get('steps', id).name}”`); const l = tblRow(id); if (l) Store.remove('milestones', l.id); Store.remove('steps', id); } }
+      else if (act === 'addcard') ask('New card', 'Card title', '', name => { Store.addCard(view.id, id, name); Store.note(view.id, `added card “${name}” to ${Store.get('steps', id).name}`); log(`Added card “${name}”`); });
       else if (act === 'cardcheck') CardLink.setCardDone(id, !CardLink.cardDone(Store.get('cards', id)));
       else if (act === 'card') cardModal(id);
       else if (act === 'people') peopleModal(view.id);
@@ -859,7 +853,6 @@ const Projects = (() => {
         }
         return;
       }
-      if (drag?.type === 'tcard') { const col = e.target.closest('[data-part]'); if (col) { e.preventDefault(); tlAssign(drag.id, col.dataset.part); } return; }
       if (!drag || !marker.parentElement) return;
       e.preventDefault();
       if (drag.type === 'card') {
@@ -889,5 +882,6 @@ const Projects = (() => {
   const leave = () => { commitSeen(); render(); };
   const inBoard = () => view.name === 'board' && !!Store.get('projects', view.id);
   const toHub = () => { commitSeen(); view = { name: 'list' }; render(); };
-  return { mount, render, open, leave, inBoard, toHub, tag: (uid, pid) => ini(uid, userColors(pid)), color: (uid, pid) => userColors(pid)[uid] };
+  const stepGroup = (pid, sid) => stepPhase(pid, sid)?.start || '';
+  return { mount, render, open, leave, inBoard, toHub, stepGroup, tag: (uid, pid) => ini(uid, userColors(pid)), color: (uid, pid) => userColors(pid)[uid] };
 })();

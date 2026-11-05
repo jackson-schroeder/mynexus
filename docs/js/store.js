@@ -245,8 +245,8 @@ const Store = (() => {
   }
   // Progress = share of cards that have reached the last step
   function progress(pid) {
-    const all = projectCards(pid), last = steps(pid).at(-1);
-    const finished = last ? all.filter(c => c.step_id === last.id).length : 0;
+    const all = projectCards(pid), done = steps(pid).filter(s => /^(done|complete(d)?|finished)$/i.test(s.name.trim())), last = steps(pid).at(-1);
+    const finished = all.filter(c => (done.length ? done.some(s => s.id === c.step_id) : last && c.step_id === last.id)).length;
     return { finished, total: all.length, pct: all.length ? Math.round(finished / all.length * 100) : 0 };
   }
   const nextPos = list => (list.length ? list[list.length - 1].position + 1 : 1);
