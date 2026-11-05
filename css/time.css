@@ -181,3 +181,5 @@ input[type="date"].pj-in, input[type="time"].pj-in { color-scheme: dark; }
   background: repeating-linear-gradient(135deg, rgba(120,90,190,.20) 0 10px, rgba(80,55,140,.26) 10px 20px); border-block: 1px solid rgba(201,167,255,.18); }
 .cal-sleep span { font-size: 11px; color: var(--muted); }
 .cal-block { z-index: 2; }
+
+.cal-pc.tinted { background: color-mix(in srgb, var(--pc) 15%, var(--glass-2)); border-color: color-mix(in srgb, var(--pc) 42%, transparent); }

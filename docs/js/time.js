@@ -238,7 +238,8 @@ const TimeUI = (() => {
       const last = pid => Store.steps(pid).slice(-1)[0]?.id;
       const tile = c => {
         const l = CardLink.forCard(c.id), tk = l && P.tasks.find(x => x.id === l.taskId);
-        return `<div class="tile cal-pc${placing === c.id ? ' placing' : ''}${CardLink.cardDone(c) ? ' done' : ''}" data-pcard="${c.id}" draggable="true"><span class="it">${esc(c.title)}</span>${tk?.date ? `<span class="chip">${shortDate(tk.date)}</span>` : ''}</div>`;
+        const lead = c.assignees.find(u => Projects.color(u, c.project_id));
+        return `<div class="tile cal-pc${lead ? ' tinted' : ''}${placing === c.id ? ' placing' : ''}${CardLink.cardDone(c) ? ' done' : ''}" ${lead ? `style="--pc:${Projects.color(lead, c.project_id)}"` : ''} data-pcard="${c.id}" draggable="true"><span class="it">${esc(c.title)}</span><span class="pj-inis">${c.assignees.map(u => Projects.tag(u, c.project_id)).join('')}</span>${tk?.date ? `<span class="chip">${shortDate(tk.date)}</span>` : ''}</div>`;
       };
       let body = '';
       if (!projects.length) body = '<div class="p cal-free">No projects yet. Start one in myProjects.</div>';

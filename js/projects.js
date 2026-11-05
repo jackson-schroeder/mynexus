@@ -94,11 +94,10 @@ const Projects = (() => {
       </div>`;
     }).join('');
     const tab = view.tab || 'cards', nUnread = Store.unread(pid).length;
-    const tabs = `<div class="td-seg pj-ptabs">${[['cards', 'Cards'], ['timeline', 'Timeline'], ['updates', 'Updates'], ['todo', 'To-do'], ['people', 'People']].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="ptab" data-tab="${k}">${l}${k === 'updates' && nUnread ? ` <span class="pj-badge">${nUnread}</span>` : ''}</button>`).join('')}</div>`;
+    const tabs = `<div class="td-seg pj-ptabs">${[['cards', 'Cards'], ['timeline', 'Timeline'], ['updates', 'Updates'], ['todo', 'To-do'], ['people', 'People'], ...(Store.can(pid, 'manage_roles') ? [['roles', 'Roles']] : [])].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="ptab" data-tab="${k}">${l}${k === 'updates' && nUnread ? ` <span class="pj-badge">${nUnread}</span>` : ''}</button>`).join('')}</div>`;
     return `${bar(`<button class="tile pj-btn" data-act="back">← All projects</button>${tabs}
-        ${tab === 'cards' ? '<h3 class="pj-ctab">All Project cards</h3>' : `<input class="pj-title" data-project-name="${pid}" value="${esc(p.name)}" ${Store.can(pid, 'manage_roles') ? '' : 'readonly'}>`}
-        ${Store.can(pid, 'manage_roles') ? `<button class="tile pj-btn" data-act="roles">Roles</button>` : ''}`)}
-      ${tab === 'people' ? peopleView(pid, colors) : tab === 'todo' ? todoView(pid, colors) : tab === 'timeline' && !inTl ? timelineView(pid) : tab === 'updates' ? updatesView(pid) : `${inTl ? `<div class="pj-row"><button class="tile pj-btn" data-act="tlback">← Timeline</button><h3>${esc(phaseName(pid, view.tlPhase))}</h3></div>` : ''}<div class="pj-sb" hidden><i></i></div><div class="pj-board" data-board="${pid}">${cols}
+        ${tab === 'cards' ? '<h3 class="pj-ctab">All Project cards</h3>' : `<input class="pj-title" data-project-name="${pid}" value="${esc(p.name)}" ${Store.can(pid, 'manage_roles') ? '' : 'readonly'}>`}`)}
+      ${tab === 'roles' && Store.can(pid, 'manage_roles') ? rolesView(pid) : tab === 'people' ? peopleView(pid, colors) : tab === 'todo' ? todoView(pid, colors) : tab === 'timeline' && !inTl ? timelineView(pid) : tab === 'updates' ? updatesView(pid) : `${inTl ? `<div class="pj-row"><button class="tile pj-btn" data-act="tlback">← Timeline</button><h3>${esc(phaseName(pid, view.tlPhase))}</h3></div>` : ''}<div class="pj-sb" hidden><i></i></div><div class="pj-board" data-board="${pid}">${cols}
         ${canSteps ? `<button class="tile pj-col pj-newstep" data-act="addstep">+ Add step</button>` : ''}</div>`}`;
   }
 
@@ -281,9 +280,18 @@ const Projects = (() => {
     if (canDel) items.push({ label: 'Delete card', danger: true, on: () => deleteCard(id) });
     if (items.length) openMenu(x, y, items);
   }
+  let openTimer = null;
+  function renameProject(pid) {
+    const p = Store.get('projects', pid); if (!p) return;
+    if (!Store.can(pid, 'manage_roles')) return toast('Only people who manage roles can rename this project');
+    ask('Rename project', 'Project name', p.name, name => { if (name !== p.name) { Store.update('projects', pid, { name }); Store.note(pid, `renamed the project to “${name}”`); } });
+  }
   function projectMenu(pid, x, y) {
-    const owner = Store.get('projects', pid)?.owner === Store.me?.id;
-    openMenu(x, y, owner ? [{ label: 'Delete project', danger: true, on: () => deleteProject(pid) }] : [{ head: 'Only the owner can delete this project' }]);
+    const owner = Store.get('projects', pid)?.owner === Store.me?.id, items = [];
+    if (Store.can(pid, 'manage_roles')) items.push({ label: 'Rename project', on: () => renameProject(pid) });
+    if (owner) items.push({ label: 'Delete project', danger: true, on: () => deleteProject(pid) });
+    else items.push({ head: 'Only the owner can delete this project' });
+    openMenu(x, y, items);
   }
 
   // To-do: one column per person (plus "Unassigned"). Drag a card onto a person to assign it.
@@ -456,6 +464,17 @@ const Projects = (() => {
     });
   }
 
+  // Roles tab: what each role can do (same controls as before, now inline)
+  function rolesView(pid) {
+    return `<div class="pj-roles"><p class="p">Choose what each role can do in this project. The owner can always do everything.</p>
+      ${Store.roles(pid).map(r => {
+        const used = Store.members(pid).some(m => m.role_id === r.id) || Store.projectInvites(pid).some(i => i.role_id === r.id);
+        return `<div class="tile pj-role"><div class="pj-row"><input class="pj-in" data-role-name="${r.id}" value="${esc(r.name)}">
+          ${used ? '' : `<button class="pj-x" data-act="delrole" data-id="${r.id}" title="Delete role">×</button>`}</div>
+          <div class="pj-perms">${Object.entries(Store.PERMS).map(([k, label]) => `<label class="pj-perm"><input type="checkbox" data-role="${r.id}" data-perm="${k}" ${r.perms[k] ? 'checked' : ''}><span class="pj-toggle"></span>${label}</label>`).join('')}</div></div>`;
+      }).join('')}
+      <div><button class="tile pj-btn" data-act="addrole">+ Add role</button></div></div>`;
+  }
   function rolesModal(pid) {
     const el = openModal(`<div class="pj-row"><h3>Roles</h3><span class="pj-spacer"></span><button class="pj-x" data-act="close">×</button></div>
       <p class="p">Choose what each role can do in this project. The owner can always do everything.</p>
@@ -485,7 +504,10 @@ const Projects = (() => {
       const id = t.dataset.id, act = t.dataset.act;
       if (act === 'close') closeModal();
       else if (act === 'new') ask('Start a Project', 'Project name', '', name => { const p = Store.startProject(name); log(`Started ${name}`); view = { name: 'board', id: p.id }; render(); });
-      else if (act === 'open') { commitSeen(); view = { name: 'board', id, tab: 'cards' }; render(); }
+      else if (act === 'open') {
+        const go = () => { commitSeen(); view = { name: 'board', id, tab: 'cards' }; render(); };
+        if (t.classList.contains('pj-proj')) { clearTimeout(openTimer); openTimer = setTimeout(go, 230); } else go();
+      }
       else if (act === 'back') { commitSeen(); view = { name: 'list' }; render(); }
       else if (act === 'ptab') { commitSeen(); view.tab = t.dataset.tab; view.tlPhase = null; showPast = false; sentNow = new Set(); render(); }
       else if (act === 'pastupd') { showPast = !showPast; render(); }
@@ -509,6 +531,8 @@ const Projects = (() => {
       else if (act === 'card') cardModal(id);
       else if (act === 'people') peopleModal(view.id);
       else if (act === 'roles') rolesModal(view.id);
+      else if (act === 'delrole') Store.remove('roles', id);
+      else if (act === 'addrole') ask('New role', 'Role name', '', name => Store.insert('roles', { project_id: view.id, name, perms: { comment: true } }));
       else if (act === 'signout') Store.signOut();
       else if (act === 'authmode') {
         const up = t.dataset.mode === 'up';
@@ -524,6 +548,7 @@ const Projects = (() => {
         if (msg && root.querySelector('#pjErr')) root.querySelector('#pjErr').textContent = msg;
       }
     });
+    root.addEventListener('dblclick', e => { const proj = e.target.closest('.pj-proj[data-id]'); if (proj) { clearTimeout(openTimer); renameProject(proj.dataset.id); } });
     root.addEventListener('contextmenu', e => {
       const card = e.target.closest('.pj-card[data-id]'), proj = e.target.closest('.pj-proj[data-id]');
       if (card) { e.preventDefault(); cardMenu(card.dataset.id, e.clientX, e.clientY); }
@@ -540,6 +565,8 @@ const Projects = (() => {
         if (a && b && b >= a) Store.update('milestones', r.id, { title: '§range|' + a, due: b }); else render();
       }
       if (t.dataset.partname && t.value.trim()) { const m = Store.get('milestones', t.dataset.partname), [, ps] = m.title.split('|'); Store.update('milestones', m.id, { title: '§part|' + ps + '|' + t.value.trim() }); }
+      if (t.dataset.perm) { const r = Store.get('roles', t.dataset.role); Store.update('roles', r.id, { perms: { ...r.perms, [t.dataset.perm]: t.checked } }); }
+      if (t.dataset.roleName && t.value.trim()) Store.update('roles', t.dataset.roleName, { name: t.value.trim() });
       if (t.dataset.projectName && t.value.trim()) Store.update('projects', t.dataset.projectName, { name: t.value.trim() });
     });
     root.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.pj-stepname, .pj-title, .tl-pname')) e.target.blur(); });
@@ -641,5 +668,5 @@ const Projects = (() => {
   function open(pid, cid) { view = { name: 'board', id: pid }; go('Projects'); if (cid) setTimeout(() => cardModal(cid)); }
 
   const leave = () => { commitSeen(); render(); };
-  return { mount, render, open, leave };
+  return { mount, render, open, leave, tag: (uid, pid) => ini(uid, userColors(pid)), color: (uid, pid) => userColors(pid)[uid] };
 })();
