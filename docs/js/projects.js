@@ -33,6 +33,7 @@ const Projects = (() => {
     else if (view.name === 'board' && Store.get('projects', view.id)) root.innerHTML = boardView(view.id);
     else { view = { name: 'list' }; root.innerHTML = listView(); }
     root.querySelectorAll('[data-grow]').forEach(grow);
+    loadPics();
     setTimeout(boardScroll);
     if (view.tab === 'updates') setTimeout(watchSeen); // start noticing which unread updates you actually look at
   }
@@ -70,10 +71,19 @@ const Projects = (() => {
       <div class="pj-grid">${ps.map(projectTile).join('') || `<div class="pj-empty p">No projects yet. Start one to get a board.</div>`}</div>`;
   }
 
+  // Title picture (only drawn when the project has one; stays invisible until it has loaded)
+  const picImg = pid => { const r = Store.projectPic(pid); return r ? `<img class="pj-pic" data-pic="${esc(r.id)}" alt="" hidden>` : ''; };
+  function loadPics() {
+    root?.querySelectorAll('img[data-pic]').forEach(async img => {
+      const row = Store.get('milestones', img.dataset.pic); if (!row) return;
+      const url = await Store.picUrl(row); if (!url || !img.isConnected) return;
+      img.onload = () => { img.hidden = false; }; img.onerror = () => { img.hidden = true; }; img.src = url;
+    });
+  }
   function projectTile(p) {
     const cs = Store.projectCards(p.id), { pct } = Store.progress(p.id);
     return `<div class="tile pj-proj" data-act="open" data-id="${p.id}">
-      <div class="pj-pname">${esc(p.name)}</div>
+      <div class="pj-phead">${picImg(p.id)}<div class="pj-pname">${esc(p.name)}</div></div>
       <div class="p">${Store.steps(p.id).length} steps · ${cs.length} cards · ${Store.members(p.id).length} people</div>
       <div class="pj-row"><div class="prog"><b style="width:${pct}%"></b></div><span class="p">${pct}%</span></div></div>`;
   }
@@ -98,7 +108,7 @@ const Projects = (() => {
     const tab = view.tab || 'cards', nUnread = Store.unread(pid).length;
     const tabs = `<div class="td-seg pj-ptabs">${[['cards', 'Cards'], ['timeline', 'Timeline'], ['updates', 'Updates'], ['todo', 'To-do'], ['people', 'People'], ...(Store.can(pid, 'manage_roles') ? [['roles', 'Roles']] : [])].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="ptab" data-tab="${k}">${l}${k === 'updates' && nUnread ? ` <span class="pj-badge">${nUnread}</span>` : ''}</button>`).join('')}</div>`;
     return `${bar(`<button class="tile pj-btn" data-act="back">← All projects</button>${tabs}
-        ${tab === 'cards' ? '<h3 class="pj-ctab">All Project cards</h3>' : `<textarea class="pj-title" rows="1" data-grow data-project-name="${pid}" ${Store.can(pid, 'manage_roles') ? '' : 'readonly'}>${esc(p.name)}</textarea>`}`)}
+        ${picImg(pid)}${tab === 'cards' ? '<h3 class="pj-ctab">All Project cards</h3>' : `<textarea class="pj-title" rows="1" data-grow data-project-name="${pid}" ${Store.can(pid, 'manage_roles') ? '' : 'readonly'}>${esc(p.name)}</textarea>`}`)}
       ${tab === 'roles' && Store.can(pid, 'manage_roles') ? rolesView(pid) : tab === 'people' ? peopleView(pid, colors) : tab === 'todo' ? todoView(pid, colors) : tab === 'timeline' && !inTl ? timelineView(pid) : tab === 'updates' ? updatesView(pid) : `${inTl ? `<div class="pj-row"><button class="tile pj-btn" data-act="tlback">← Timeline</button><h3>${esc(phaseName(pid, view.tlPhase))}</h3></div>` : ''}<div class="pj-sb" hidden><i></i></div><div class="pj-board" data-board="${pid}">${cols}
         ${canSteps ? `<button class="tile pj-col pj-newstep" data-act="addstep">+ Add step</button>` : ''}</div>`}`;
   }
@@ -282,6 +292,54 @@ const Projects = (() => {
     if (canDel) items.push({ label: 'Delete card', danger: true, on: () => deleteCard(id) });
     if (items.length) openMenu(x, y, items);
   }
+  const mb = n => (n / 1048576).toFixed(n < 1048576 * 10 ? 1 : 0) + ' MB';
+  async function shrink(file) { // pictures only need to be title-sized: this keeps the 30 MB going a long way
+    try {
+      if (!/^image\/(png|jpe?g|webp|bmp|avif)$/.test(file.type)) return file;
+      const bmp = await createImageBitmap(file), k = Math.min(1, 640 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.86));
+      return blob && blob.size < file.size ? new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : file;
+    } catch { return file; }
+  }
+  function editProject(pid) {
+    const p = Store.get('projects', pid); if (!p) return;
+    if (!Store.can(pid, 'manage_roles')) return toast('Only people who manage roles can edit this project');
+    const cur = Store.projectPic(pid); let pending = null, removed = false;
+    const el = openModal(`<div class="pj-row"><h3>Edit project</h3><span class="pj-spacer"></span><button class="pj-x" data-act="close">×</button></div>
+      <h4>Name</h4><textarea class="pj-in" id="epName" rows="1" data-grow>${esc(p.name)}</textarea>
+      <h4>Picture</h4><div class="pj-row ep-pic"><span class="ep-prev" id="epPrev"></span>
+        <button class="tile pj-btn" id="epChoose">Choose picture</button><button class="tile pj-btn" id="epRemove" hidden>Remove</button><input type="file" id="epFile" accept="image/*" hidden></div>
+      <div class="p" id="epUse"></div><div class="pj-err" id="epErr"></div>
+      <div class="pj-row end"><button class="tile pj-btn" data-act="close">Cancel</button><button class="tile pj-btn primary" id="epSave">Save</button></div>`);
+    const prev = el.querySelector('#epPrev'), err = el.querySelector('#epErr'), name = el.querySelector('#epName');
+    const used = () => Store.imageUsage();
+    const paint = () => {
+      const show = pending ? URL.createObjectURL(pending) : (!removed && cur ? 'cur' : '');
+      prev.innerHTML = show ? `<img alt="" ${show === 'cur' ? '' : `src="${show}"`}>` : '<i>+</i>';
+      if (show === 'cur') Store.picUrl(cur).then(u => { const im = prev.querySelector('img'); if (im && u) im.src = u; });
+      el.querySelector('#epRemove').hidden = !(pending || (!removed && cur));
+      el.querySelector('#epUse').textContent = `Images used: ${mb(used())} of ${mb(Store.IMG_LIMIT)}`;
+    };
+    paint(); name.focus();
+    el.querySelector('#epChoose').onclick = () => el.querySelector('#epFile').click();
+    el.querySelector('#epFile').onchange = async e => {
+      const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+      if (!Store.isImage(f.name) && !f.type.startsWith('image/')) { err.textContent = 'Pick an image file.'; return; }
+      const small = await shrink(f), freed = cur && cur.created_by === Store.me?.id ? Number(cur.title.split('|')[2]) || 0 : 0;
+      if (used() - freed + small.size > Store.IMG_LIMIT) { err.textContent = 'You\u2019ve hit your 30 MB image limit. Remove personal images from myNexus to add more.'; return; }
+      err.textContent = ''; pending = small; removed = false; paint();
+    };
+    el.querySelector('#epRemove').onclick = () => { pending = null; removed = true; err.textContent = ''; paint(); };
+    el.querySelector('#epSave').onclick = async () => {
+      const v = name.value.trim(), b = el.querySelector('#epSave'); b.disabled = true; err.textContent = '';
+      if (v && v !== p.name) { Store.update('projects', pid, { name: v }); Store.note(pid, `renamed the project to “${v}”`); }
+      if (removed && !pending) await Store.removeProjectPic(pid);
+      if (pending) { const msg = await Store.setProjectPic(pid, pending); if (msg) { err.textContent = msg; b.disabled = false; return; } }
+      closeModal();
+    };
+    name.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.querySelector('#epSave').click(); } });
+  }
   let openTimer = null;
   function renameProject(pid) {
     const p = Store.get('projects', pid); if (!p) return;
@@ -290,7 +348,7 @@ const Projects = (() => {
   }
   function projectMenu(pid, x, y) {
     const owner = Store.get('projects', pid)?.owner === Store.me?.id, items = [];
-    if (Store.can(pid, 'manage_roles')) items.push({ label: 'Rename project', on: () => renameProject(pid) });
+    if (Store.can(pid, 'manage_roles')) items.push({ label: 'Edit project', on: () => editProject(pid) });
     if (owner) items.push({ label: 'Delete project', danger: true, on: () => deleteProject(pid) });
     else items.push({ head: 'Only the owner can delete this project' });
     openMenu(x, y, items);
@@ -553,7 +611,7 @@ const Projects = (() => {
         if (msg && root.querySelector('#pjErr')) root.querySelector('#pjErr').textContent = msg;
       }
     });
-    root.addEventListener('dblclick', e => { const proj = e.target.closest('.pj-proj[data-id]'); if (proj) { clearTimeout(openTimer); renameProject(proj.dataset.id); } });
+    root.addEventListener('dblclick', e => { const proj = e.target.closest('.pj-proj[data-id]'); if (proj) { clearTimeout(openTimer); editProject(proj.dataset.id); } });
     root.addEventListener('contextmenu', e => {
       const card = e.target.closest('.pj-card[data-id]'), proj = e.target.closest('.pj-proj[data-id]');
       if (card) { e.preventDefault(); cardMenu(card.dataset.id, e.clientX, e.clientY); }

@@ -300,6 +300,7 @@ const Store = (() => {
 
   async function attach(card, file) {
     const path = `${card.project_id}/${card.id}/${uuid()}-${file.name}`;
+    if (isImage(file.name) && imageUsage() + file.size > IMG_LIMIT) return LIMIT_MSG;
     if (sb) {
       if (!navigator.onLine) return 'Files can only be attached while online';
       const { error } = await sb.storage.from('attachments').upload(path, file);
@@ -316,6 +317,48 @@ const Store = (() => {
     const { data } = await sb.storage.from('attachments').createSignedUrl(a.path, 3600);
     return data?.signedUrl;
   }
+  // ---------- Pictures: everyone gets 30 MB of images (project pictures + image attachments) ----------
+  const IMG_LIMIT = 30 * 1024 * 1024, IMG_RE = /\.(png|jpe?g|gif|webp|bmp|heic|heif|avif|svg)$/i;
+  const isImage = name => IMG_RE.test(name || '');
+  const LIMIT_MSG = 'You’ve hit your 30 MB image limit. Remove personal images from myNexus to add more.';
+  const picRow = pid => db.milestones.find(m => m.project_id === pid && m.title.startsWith('§pic|'));
+  const picSize = row => (row ? Number(row.title.split('|')[2]) || 0 : 0);
+  function imageUsage() {
+    const id = me?.id;
+    return db.attachments.filter(a => a.uploaded_by === id && isImage(a.name)).reduce((s, a) => s + (a.size || 0), 0)
+      + db.milestones.filter(m => m.created_by === id && m.title.startsWith('§pic|')).reduce((s, m) => s + picSize(m), 0);
+  }
+  // A project's title picture is stored as a tagged row: "§pic|<path>|<bytes>" (no extra database setup)
+  async function setProjectPic(pid, file) {
+    const old = picRow(pid), used = imageUsage() - (old && old.created_by === me?.id ? picSize(old) : 0);
+    if (used + file.size > IMG_LIMIT) return LIMIT_MSG;
+    let path;
+    if (sb) {
+      if (!navigator.onLine) return 'Pictures can only be added while online';
+      path = `${pid}/pic/${uuid()}-${file.name.replace(/[^\w.\-]+/g, '_')}`;
+      const { error } = await sb.storage.from('attachments').upload(path, file);
+      if (error) return error.message;
+    } else path = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(file); });
+    if (old) await removeProjectPic(pid);
+    insert('milestones', { project_id: pid, title: `§pic|${path}|${file.size}`, due: now().slice(0, 10), done: false, created_by: me.id, created_at: now() });
+    return '';
+  }
+  async function removeProjectPic(pid) {
+    const row = picRow(pid); if (!row) return;
+    const path = row.title.split('|')[1];
+    if (sb && !path.startsWith('data:')) await sb.storage.from('attachments').remove([path]);
+    remove('milestones', row.id);
+  }
+  const picCache = new Map();
+  async function picUrl(row) {
+    const path = row.title.split('|')[1];
+    if (!sb || path.startsWith('data:')) return path;
+    const hit = picCache.get(path); if (hit && hit.at > Date.now() - 50 * 60 * 1000) return hit.url;
+    const { data } = await sb.storage.from('attachments').createSignedUrl(path, 3600);
+    if (data?.signedUrl) picCache.set(path, { url: data.signedUrl, at: Date.now() });
+    return data?.signedUrl;
+  }
+
   async function removeAttachment(a) {
     if (sb) await sb.storage.from('attachments').remove([a.path]);
     remove('attachments', a.id);
@@ -326,6 +369,7 @@ const Store = (() => {
     subscribe: f => (listeners.add(f), () => listeners.delete(f)), start, signUp, signIn, signOut, requestCode, verifyCode, requestReset, resetPassword, resetEverything, kick: emit,
     get, insert, update, remove, myProjects, rows: t => db[t], steps, cards, projectCards, roles, members, comments, attachments,
     myInvites, projectInvites, note, updates, unread, markSeen, seenIds, milestones, get v2Missing() { return v2Missing; }, username, initials, can, progress, startProject, addStep, addCard, moveCard, moveStep, comment,
-    invite, findUser, acceptInvite, attach, fileUrl, removeAttachment
+    invite, findUser, acceptInvite, attach, fileUrl, removeAttachment,
+    projectPic: picRow, picUrl, setProjectPic, removeProjectPic, imageUsage, IMG_LIMIT, isImage
   };
 })();
