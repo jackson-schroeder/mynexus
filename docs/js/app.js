@@ -54,6 +54,23 @@ function go(path) {
   document.getElementById('subtabs').innerHTML = SUBS[tab].map(s =>
     `<button class="tile${s === sub ? ' on' : ''}" data-go="${tab}/${s}" ${isHidden(tab + '/' + s) ? 'hidden' : ''}>${title(s)}</button>`).join('');
 }
+// Phone: swipe sideways to switch tabs (ignored over things that scroll sideways, fields and pop-ups)
+(() => {
+  let s = null;
+  const tabs = () => [...document.querySelectorAll('nav button[data-go]:not([hidden])')].map(b => b.dataset.go);
+  const scrollsX = el => { for (; el && el !== document.body; el = el.parentElement) { const o = getComputedStyle(el).overflowX; if ((o === 'auto' || o === 'scroll') && el.scrollWidth > el.clientWidth + 2) return true; } return false; };
+  document.addEventListener('touchstart', e => {
+    const t = e.target, one = e.touches.length === 1;
+    s = isPhone() && one && !t.closest('input, textarea, select, .pj-overlay, .gate:not([hidden]), .search-pop, .tl-wk, [draggable="true"]') && !scrollsX(t) ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!s) return;
+    const dx = e.changedTouches[0].clientX - s.x, dy = e.changedTouches[0].clientY - s.y; s = null;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+    const list = tabs(), i = list.indexOf(current.split('/')[0]), to = list[i + (dx < 0 ? 1 : -1)];
+    if (i >= 0 && to) go(to);
+  }, { passive: true });
+})();
 // Tab bar: handle is exactly as wide as the bar (which changes when tabs are hidden);
 // the active highlight slides to the tab you open, and a softer one glides after your mouse
 const place = (el, b) => { el.style.transform = `translate(${b.offsetLeft}px, ${b.offsetTop}px)`; el.style.width = b.offsetWidth + 'px'; };
