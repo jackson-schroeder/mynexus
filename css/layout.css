@@ -1,0 +1,140 @@
+/* myNexus layout — positions and sizes only. Colors, radii, motion come from theme.css. */
+body { display: flex; padding: 16px var(--edge-gap) var(--edge-gap); height: 100vh; overflow: hidden; }
+.dragbar { position: fixed; top: 0; left: 0; right: 0; height: 14px; -webkit-app-region: drag; }
+.shell { display: flex; gap: var(--edge-gap); align-items: center; width: 100%; height: 100%; }
+[data-go] { cursor: pointer; }
+/* Tab bar — the same as the window-controls bar: a pearl handle (exactly the bar's width) at the top center;
+   hovering drops the glass bar down with the same animation. --navw is set from the bar's real width. */
+.navwrap { position: fixed; top: 0; left: 50%; translate: -50% 0; z-index: 30; width: calc(var(--navw, 216px) + 2 * var(--edge-gap)); height: 14px; -webkit-app-region: no-drag; }
+.navwrap::before { content: ""; position: absolute; top: 4px; left: var(--edge-gap); right: var(--edge-gap); height: 5px; border-radius: 99px; background: var(--pearl);
+  box-shadow: 0 0 10px rgba(225,210,255,.35); transition: opacity .25s ease, transform var(--t-med) var(--ease); }
+.navwrap:hover { height: 76px; }
+.navwrap:hover::before { opacity: 0; transform: scaleX(.4); }
+nav { position: absolute; top: var(--edge-gap); left: var(--edge-gap); display: flex; gap: 6.6px; padding: 5.5px; border-radius: 17.6px; /* 10% larger than the window bar */
+  transform: translateY(-70px); opacity: 0; will-change: transform, opacity;
+  transition: transform .4s var(--ease-bounce), opacity .25s ease; }
+.navwrap:hover nav { transform: translateY(0); opacity: 1; }
+nav button { height: 40px; padding: 0 13px 0 11px; gap: 9px; white-space: nowrap; border-radius: 12px; border: 1px solid transparent; background: none; color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: background var(--t-fast); }
+nav button { position: relative; z-index: 1; }
+/* Highlights that glide between tabs: one follows your mouse, one sits on the tab you're on */
+nav .indicator, nav .hoverdot { position: absolute; top: 0; left: 0; height: 40px; border-radius: 12px; pointer-events: none; border: 1px solid var(--edge); background: var(--glass-hover); }
+nav .indicator { box-shadow: var(--shine), 0 0 14px rgba(190,150,255,.18); transition: transform .5s var(--ease-bounce), width .5s var(--ease-bounce), opacity var(--t-med) ease; }
+nav .hoverdot { opacity: 0; background: rgba(255,255,255,.07); transition: transform .35s var(--ease), width .35s var(--ease), opacity .25s ease; }
+nav .hoverdot.on { opacity: 1; }
+nav .hoverdot.jump { transition: opacity .25s ease; }
+nav svg { display: block; width: 19px; height: 19px; stroke-width: 1.8; flex-shrink: 0; }
+nav .nav-lbl { font-size: 14.3px; }
+/* In a window the top is the drag bar, so the tab handle sits just under it */
+.windowed .navwrap { top: 58px; }
+
+/* Window controls (Electron only) */
+.topzone { display: none; position: fixed; top: 0; right: 0; width: 160px; height: 14px; z-index: 10; -webkit-app-region: no-drag; }
+.app .topzone { display: block; }
+.topzone:hover { height: 70px; }
+.handle { position: absolute; top: 4px; right: 40px; width: 72px; height: 5px; border-radius: 99px; background: var(--pearl);
+  box-shadow: 0 0 10px rgba(225,210,255,.35); transition: opacity .25s ease, transform var(--t-med) var(--ease); }
+.topzone:hover .handle { opacity: 0; transform: scaleX(.4); }
+.winctl { display: flex; justify-content: flex-end; gap: 6px; padding: 5px; border-radius: 16px; position: absolute; top: var(--edge-gap); right: var(--edge-gap); width: 132px;
+  transform: translateY(-64px); opacity: 0; will-change: transform, opacity, width;
+  transition: transform .4s var(--ease-bounce), opacity .25s ease, width .6s var(--ease); }
+.topzone:hover .winctl { transform: translateY(0); opacity: 1; }
+.winctl button { width: 36px; height: 36px; padding: 0; border-radius: var(--r-sm); border: 1px solid transparent; background: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.winctl button:hover { background: var(--glass-hover); border-color: var(--edge); }
+.winctl button.x:hover { background: var(--danger); }
+.winctl svg { display: block; width: 14px; height: 14px; stroke-width: 1.8; }
+
+/* Windowed mode: controls stay out and the bubble stretches into a drag bar */
+body.windowed { padding-top: 68px; }
+.windowed .topzone { width: 100%; height: 70px; }
+.windowed .handle { opacity: 0; }
+.windowed .winctl { transform: translateY(0); opacity: 1; width: calc(100% - 2 * var(--edge-gap)); -webkit-app-region: drag; }
+.windowed .winctl button { -webkit-app-region: no-drag; }
+
+/* Main panel */
+.panel { flex: 1; align-self: stretch; border-radius: var(--r-panel); padding: 24px 26px; display: flex; flex-direction: column; gap: var(--gap); min-width: 0; overflow: hidden; }
+.view { display: none; flex: 1; flex-direction: column; gap: var(--gap); min-height: 0; }
+.view.on { display: flex; }
+
+/* Top bar */
+.top { display: flex; justify-content: space-between; align-items: center; gap: 0; position: relative; margin-top: -14px; }
+.top::after { content: ""; position: absolute; left: -14px; right: -14px; bottom: calc(var(--gap) / -2); height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.14) 6%, rgba(255,255,255,.14) 94%, transparent); pointer-events: none; } /* thin divider between the top bar and the app */
+/* search sits the same visual distance (36px) from the title and from the date text as date is from weather */
+.brand { display: flex; align-items: center; gap: 36px; flex: 1; min-width: 0; margin-right: 18px; }
+.brand h1 { font-size: 47px; letter-spacing: -0.03em; line-height: 46px; height: 46px; white-space: nowrap; } /* same height as the search bar */
+.search { flex: 1; min-width: 0; height: 46px; border-radius: var(--r-md); display: flex; align-items: center; gap: 10px; padding: 0 16px; color: var(--muted); font-size: 14px; background: var(--well); border: 1px solid rgba(255,255,255,.08); }
+.search svg { width: 16px; height: 16px; stroke-width: 1.8; }
+.right { display: flex; gap: 10px; align-items: center; }
+.date { height: 46px; padding: 0 18px; display: flex; align-items: center; font-size: 14px; }
+.weather { height: 46px; padding: 0 8px; display: flex; align-items: center; gap: 10px; font-size: 15px; line-height: 1.2; }
+.weather svg { width: 24px; height: 24px; }
+.weather small { display: block; font-size: 12px; color: var(--muted); }
+.iconbtn { width: 46px; height: 46px; border-radius: var(--r-md); display: grid; place-items: center; color: var(--muted); }
+.iconbtn:hover { color: var(--text); background: var(--glass-hover); }
+.iconbtn svg { width: 20px; height: 20px; }
+
+/* Dashboard */
+#dash .hero { flex: 1.3; }
+#dash .lower { flex: 1; }
+.hero { display: grid; grid-template-columns: 1fr 2fr; gap: var(--gap); }
+.updates { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.updates .row { margin-top: 0; padding: 10px 14px; }
+.summary { display: grid; grid-template-columns: 1fr 1.2fr; gap: var(--gap); }
+.card { border-radius: var(--r-xl); padding: 20px 22px; }
+.card h3 { font-size: 30px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+.card h3 svg { width: 18px; height: 18px; order: 1; }
+.big { font-size: 34px; font-weight: 400; margin-top: 14px; display: flex; align-items: center; gap: 10px; }
+.chip { font-size: 12px; padding: 4px 9px; border-radius: 8px; background: var(--well); }
+.sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.it { font-size: 15px; }
+.p { font-size: 12px; color: var(--muted); }
+
+.today { display: flex; flex-direction: column; gap: 10px; }
+.ev { display: flex; align-items: center; gap: 14px; padding: 8px 0; }
+.ev .tm { width: 72px; font-size: 13px; color: var(--muted); flex-shrink: 0; }
+.ev .bar { width: 4px; align-self: stretch; border-radius: 99px; background: var(--bar); opacity: .6; }
+.ev .bar.hl { background: var(--accent); opacity: 1; }
+
+.chart { display: flex; flex-direction: column; }
+.bars { flex: 1; display: flex; align-items: flex-end; gap: 10px; margin-top: 16px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,.08); min-height: 130px; }
+.bars i { flex: 1; border-radius: 6px 6px 3px 3px; background: var(--bar); opacity: .85; }
+.bars i.hl { background: var(--accent); opacity: 1; }
+.days { display: flex; gap: 10px; font-size: 11px; color: var(--muted); margin-top: 8px; }
+.days span { flex: 1; text-align: center; }
+
+.lower { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+.section { border-radius: var(--r-xl); padding: 22px; }
+.section h2 { font-size: 32px; font-weight: 500; margin-bottom: 14px; }
+.row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; margin-top: 10px; border-radius: var(--r-md); cursor: pointer; }
+.row:hover { background: var(--glass-hover); }
+.row .r { margin-left: auto; font-size: 13px; color: var(--muted); }
+.check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--edge); flex-shrink: 0; }
+.check.done { background: var(--accent); border-color: var(--accent); }
+.prog { flex: 1; height: 5px; border-radius: 99px; background: rgba(255,255,255,.85); overflow: hidden; margin: 0 6px; }
+.prog b { display: block; height: 100%; background: var(--accent); }
+
+/* Tab pages */
+/* Page header: title and its sub-tabs share one row so the page body gets the most room */
+.page-head { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; flex-shrink: 0; }
+.page h1 { font-size: 46px; line-height: 1.1; letter-spacing: -0.03em; }
+.subtabs { display: flex; gap: 10px; flex-wrap: wrap; }
+.subtabs button { font: inherit; font-size: 15px; color: var(--text); padding: 10px 18px; border-radius: 999px; cursor: pointer; }
+.subtabs button.on { background: var(--glass-hover); border-color: var(--edge); }
+.empty { flex: 1; border-radius: var(--r-xl); display: grid; place-items: center; color: var(--muted); font-size: 16px; min-height: 200px; }
+
+/* Version badge next to the myNexus title */
+.ver { font-size: 15px; font-weight: 500; letter-spacing: .02em; margin-left: 8px; color: var(--muted); } /* sits on the same baseline as "Nexus" */
+/* Search */
+.search input { flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--text); background: none; border: 0; outline: none; }
+.search input::placeholder { color: var(--muted); }
+.search:focus-within { border-color: var(--edge); }
+.search-pop { position: fixed; z-index: 60; border-radius: var(--r-lg); padding: 6px; display: flex; flex-direction: column; gap: 2px; max-height: 60vh; overflow-y: auto;
+  background: rgba(40,24,60,.92); animation: popIn .18s var(--ease); }
+@keyframes popIn { from { opacity: 0; transform: translateY(-6px); } }
+.search-row { font: inherit; color: var(--text); background: none; border: 1px solid transparent; border-radius: var(--r-md); padding: 10px 12px; cursor: pointer;
+  display: grid; grid-template-columns: 76px 1fr auto; gap: 12px; align-items: center; text-align: left; }
+.search-row.on { background: var(--glass-hover); border-color: var(--edge); }
+.search-kind { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.search-title { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-sub { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.search-none { padding: 14px; color: var(--muted); font-size: 14px; }

@@ -1,0 +1,125 @@
+/* ==========================================================
+   myNexus THEME — change anything here and it updates everywhere.
+   Layout lives in layout.css and only references these tokens.
+   ========================================================== */
+:root {
+  /* Text */
+  --font: Inter, system-ui, sans-serif;
+  --text: #f1ecf7;
+  --muted: rgba(241,236,247,.6);
+  --my: #f5efe1;                       /* the "my" in every title */
+  --my-weight: 300;
+  --name-weight: 500;
+  --name-1: #e4d2ff; --name-2: #b69cff; --name-3: #f0b8ff; --name-4: #cdd6ff;
+  --name: linear-gradient(100deg, var(--name-1) 0%, var(--name-2) 20%, var(--name-3) 40%, var(--name-4) 60%, var(--name-2) 80%, var(--name-1) 100%);
+  --name-flow: 8s;                     /* speed of the flowing title gradient */
+
+  /* Colors */
+  --bg: #1a0f26;
+  --bg-image:
+    radial-gradient(900px 600px at 15% 30%, rgba(150,70,180,.45), transparent 60%),
+    radial-gradient(800px 700px at 85% 20%, rgba(120,80,200,.40), transparent 60%),
+    radial-gradient(700px 500px at 60% 100%, rgba(90,40,130,.5), transparent 60%),
+    linear-gradient(160deg, #2b1840, #160c22);
+  --accent: #6b3fe0;
+  --bar: #d9d2e6;
+  --good: #5fe0a3;
+  --danger: rgba(240,120,170,.28);
+  --well: rgba(20,8,35,.45);           /* recessed backgrounds: chips, search, icon wells */
+  --pearl: linear-gradient(90deg, #e9defa, #f5efe1, #d8e2ff);
+
+  /* Calendar event colors and task priority colors */
+  --ev-1: #9b7bff; --ev-2: #f08ad6; --ev-3: #7fb2ff; --ev-4: #5fe0a3; --ev-5: #ffc37a;
+  --pri-1: #7fb2ff; --pri-2: #ffc37a; --pri-3: #ff8fb8;
+
+  --scroll: rgba(225,210,255,.28);
+  --scroll-hover: rgba(225,210,255,.5);
+
+  /* Icons (duotone: outline + gradient fill + cream highlight) */
+  --icon-a: #c9a7ff;
+  --icon-b: #f0b8ff;
+  --icon-fill: .3;
+  --icon-fill-active: .65;
+
+  /* Glass surfaces */
+  --glass: rgba(255,255,255,.07);      /* big containers: panel, nav */
+  --glass-2: rgba(255,255,255,.10);    /* sections and buttons (.tile) */
+  --glass-hover: rgba(255,255,255,.16);
+  --edge: rgba(255,250,245,.18);
+  --edge-soft: rgba(255,255,255,.12);
+  --blur: blur(24px) saturate(140%);
+  --shine: inset 0 1px 0 rgba(255,255,255,.14);
+  --shadow: 0 20px 50px rgba(10,0,25,.45);
+
+  /* Shape and spacing */
+  --r-sm: 11px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-panel: 32px;
+  --edge-gap: 10px;                    /* distance from screen edges */
+  --gap: 22px;
+
+  /* Hover lift (applies to every .tile, button and the search bar) */
+  --lift-px: 4px;                      /* every element grows this much on each side (was 12px) */
+  --lift-shadow: 0 30px 60px rgba(8,0,20,.6), 0 0 30px rgba(190,150,255,.18);
+  --stroke-width: 1.5px;
+
+  /* Motion */
+  --ease: cubic-bezier(.2,.9,.25,1);
+  --ease-bounce: cubic-bezier(.2,.9,.25,1.05);
+  --t-fast: .15s;
+  --t-med: .35s;
+  --type-speed: 32ms;                  /* per letter when the sidebar types tab names */
+  --nav-open: 240px;                   /* sidebar width when expanded */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; color: var(--text); font-family: var(--font); background-color: var(--bg); background: var(--bg-image); }
+
+/* Titles: <span class="my">my</span><span class="nm">Name</span> */
+.my { color: var(--my); font-weight: var(--my-weight); }
+.nm { background: var(--name); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-weight: var(--name-weight); animation: flow var(--name-flow) ease-in-out infinite; }
+@keyframes flow { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+/* Surfaces */
+.glass { background: var(--glass); border: 1px solid var(--edge); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  box-shadow: var(--shine), var(--shadow); }
+.tile { background: var(--glass-2); border: 1px solid var(--edge-soft); border-radius: var(--r-lg); box-shadow: var(--shine); }
+/* Same look as .tile for large panels that should not lift on hover */
+.surface { background: var(--glass-2); border: 1px solid var(--edge-soft); box-shadow: var(--shine); }
+
+/* Hover lift: every section (.tile) and button pulls out with depth and a flowing gradient stroke */
+.tile, .search { position: relative; /* no will-change: layered text renders soft */
+  transition: transform var(--t-med) var(--ease), box-shadow var(--t-med) ease, background var(--t-fast); }
+.tile::before, .search::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: var(--stroke-width); pointer-events: none;
+  background: var(--name); background-size: 300% 100%; animation: flow var(--name-flow) ease-in-out infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity var(--t-med) ease; }
+.tile:hover, .search:hover { transform: scale(var(--s, 1.05)); z-index: 5; box-shadow: var(--lift-shadow), var(--shine); }
+.tile:hover::before, .search:hover::before { opacity: 1; }
+
+
+/* Scrollbars (everywhere) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scroll); border-radius: 99px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-hover); border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-button { display: none; }
+
+/* Icons */
+svg { stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+svg .fill { fill: url(#ig); stroke: none; opacity: var(--icon-fill); transition: opacity var(--t-med) ease; }
+svg .fill.soft { opacity: calc(var(--icon-fill) * .6); }
+svg .hi { stroke: var(--my); opacity: .85; }
+.active svg .fill, button:hover svg .fill { opacity: var(--icon-fill-active); }
+.active svg .fill.soft, button:hover svg .fill.soft { opacity: calc(var(--icon-fill-active) * .6); }
+
+@media (prefers-reduced-motion: reduce) { .nm, .tile::before { animation: none; } }
+
+/* Low-poly icon facets (myFitness sprinter): solid silhouette with gradient facets */
+svg .lp { fill: currentColor; stroke: none; }
+svg .lp.g { fill: url(#ig); }

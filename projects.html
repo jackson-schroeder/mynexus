@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>myProjects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/projects.css">
+</head>
+<body>
+<div class="dragbar"></div>
+<div class="topzone"><div class="handle"></div><div class="winctl glass">
+  <button onclick="nexus.min()" title="Minimize"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+  <button onclick="nexus.toggle()" title="Full screen"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></button>
+  <button class="x" onclick="nexus.close()" title="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div></div>
+<div class="shell">
+  <div class="panel glass">
+    <div class="top"><div class="brand"><h1><span class="my">my</span><span class="nm">Projects</span></h1></div></div>
+    <div class="pj-root" id="projectsRoot"></div>
+  </div>
+</div>
+<script src="js/config.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/store.js"></script>
+<script src="js/authflow.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/lift.js"></script>
+<script>
+  Projects.mount(document.getElementById('projectsRoot'));
+  Store.start();
+</script>
+</body>
+</html>

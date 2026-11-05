@@ -1,0 +1,143 @@
+/* myNexus phone layout (html.phone is set for narrow screens by js/lift.js; the desktop app never gets it).
+   Pages scroll here instead of fitting one screen, and the tab bar sits at the bottom. */
+html.phone, html.phone body { height: 100%; overscroll-behavior: none; }
+html.phone body { display: block; padding: 0; overflow: hidden; }
+html.phone .dragbar, html.phone .topzone { display: none; }
+html.phone .shell { flex-direction: column; align-items: stretch; gap: 0; height: 100dvh; }
+html.phone .panel { order: 1; flex: 1; min-height: 0; border-radius: 0; border-width: 0; padding: calc(10px + env(safe-area-inset-top)) 14px 10px; gap: 10px; overflow: hidden; }
+html.phone .view.on { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 2px 0 8px; margin: 0 -2px; }
+html.phone .view > * { flex-shrink: 0; }
+
+/* top bar: title, search, settings */
+html.phone .top { margin-top: 0; gap: 8px; flex-shrink: 0; }
+html.phone .top::after { display: none; }
+html.phone .brand { gap: 10px; margin-right: 8px; }
+html.phone .brand h1 { font-size: 28px; height: 40px; line-height: 40px; }
+html.phone .ver, html.phone .date, html.phone .weather { display: none; }
+html.phone .search { height: 40px; padding: 0 12px; }
+html.phone .iconbtn { width: 40px; height: 40px; }
+
+/* tab bar at the bottom */
+html.phone .navwrap { order: 2; position: static; translate: none; width: 100%; height: auto; flex-shrink: 0; padding: 6px 10px calc(8px + env(safe-area-inset-bottom)); background: rgba(26,15,38,.92); border-top: 1px solid var(--edge-soft); }
+html.phone .navwrap::before { display: none; }
+html.phone nav, html.phone .navwrap:hover nav { position: relative; top: 0; left: 0; transform: none; opacity: 1; width: 100%; justify-content: space-around; gap: 0; padding: 4px; will-change: auto; }
+html.phone nav button { flex: 1; padding: 0; height: 44px; }
+html.phone nav .nav-lbl { display: none; }
+
+/* no hover lifts on a touchscreen */
+html.phone .tile:hover, html.phone .search:hover { transform: none; box-shadow: var(--shine); }
+html.phone .tile:hover::before, html.phone .search:hover::before { opacity: 0; }
+
+/* pages */
+html.phone .page-head { gap: 8px 14px; }
+html.phone .page h1 { font-size: 34px; }
+html.phone .subtabs { gap: 6px; flex-wrap: nowrap; overflow-x: auto; max-width: 100%; }
+html.phone .subtabs button { padding: 8px 14px; font-size: 14px; white-space: nowrap; }
+html.phone .mod-root, html.phone .pj-root { overflow: visible; flex: none; }
+
+/* dashboard */
+html.phone #dash.view.on { display: flex; flex-direction: column; gap: 12px; }
+html.phone #dash .hero, html.phone #dash .lower { flex: none; }
+html.phone .hero, html.phone .lower, html.phone .summary { grid-template-columns: 1fr; gap: 12px; }
+html.phone .card { padding: 16px; }
+html.phone .card h3, html.phone .section h2 { font-size: 24px; }
+html.phone .section { padding: 16px; }
+
+/* fitness (lifting / running / diet) */
+html.phone .lg-pages { overflow: visible; margin: 0; flex: none; }
+html.phone .lg-track { height: auto; transform: none !important; }
+html.phone .lg-page { height: auto; padding: 0; }
+html.phone .lg-next { display: none; }
+html.phone .fx-wrap, html.phone .lg-page > .fx-wrap { overflow: visible; height: auto; padding: 0 0 8px; margin: 0; flex: none; gap: 12px; }
+html.phone .fx-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+html.phone .fx-grid, html.phone .fx-split { grid-template-columns: 1fr; gap: 12px; }
+html.phone .fx-card { padding: 16px; }
+html.phone .fx-stat { padding: 14px 16px; }
+html.phone .fx-stat b { font-size: 28px; }
+html.phone .fx-calrow { gap: 16px; flex-wrap: wrap; justify-content: center; }
+html.phone .fx-cal { width: 150px; height: 150px; }
+html.phone .fx-h { flex-wrap: wrap; }
+html.phone .fx-lift { grid-template-columns: 1fr auto; }
+html.phone .fx-lift > :nth-child(3) { grid-column: 1 / -1; text-align: left; }
+html.phone .fx-big { font-size: 34px; }
+html.phone .mod-root { flex-direction: column; min-width: 0; }
+html.phone .mod-root > *, html.phone .lg-pages { min-width: 0; max-width: 100%; }
+html.phone .fx-stat, html.phone .fx-card, html.phone .fx-split > *, html.phone .fx-grid > * { min-width: 0; }
+
+/* myTime: todo + calendar */
+html.phone .td-wrap, html.phone .cal-wrap { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+html.phone .td-summary { padding: 16px; overflow: visible; gap: 14px; }
+html.phone .td-rings { flex: none; }
+html.phone .td-ring { height: auto; max-height: 150px; }
+html.phone .td-ring-in b { font-size: 30px; }
+html.phone .td-stats { grid-template-columns: 1fr 1fr; }
+html.phone .td-tasks { gap: 12px; }
+html.phone .td-add { flex-wrap: wrap; padding: 8px 8px 8px 14px; }
+html.phone .tm-addin { min-width: 0; flex-basis: 100%; }
+html.phone .td-seg { flex-wrap: wrap; }
+html.phone .tm-groups { overflow: visible; margin: 0; padding: 0; flex: none; }
+html.phone .tm-task { padding: 12px 14px; }
+html.phone .cal-month, html.phone .cal-day { padding: 12px; }
+html.phone .cal-head { flex-wrap: wrap; }
+html.phone .cal-head h2 { font-size: 22px; }
+html.phone .cal-dow { gap: 4px; padding: 0; }
+html.phone .cal-grid { grid-template-rows: repeat(6, 48px); gap: 4px; flex: none; min-height: 0; }
+html.phone .cal-cell { padding: 4px; gap: 2px; align-items: center; }
+html.phone .cal-num { width: 22px; height: 22px; font-size: 12px; }
+html.phone .cal-items { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 2px; width: 100%; overflow: hidden; }
+html.phone .cal-ev, html.phone .cal-tk { font-size: 0; width: 6px; height: 6px; padding: 0; border: 0; border-radius: 50%; background: var(--c, var(--icon-a)); line-height: 0; }
+html.phone .cal-tk i { display: none; }
+html.phone .cal-more { display: none; }
+html.phone .cal-tl { flex: none; height: 460px; }
+html.phone .cal-form { grid-template-columns: 1fr; }
+
+/* settings */
+html.phone .set-wrap { grid-template-columns: minmax(0, 1fr); height: auto; }
+html.phone .ac-card, html.phone .set-wrap .ac-card { padding: 16px; width: 100%; }
+html.phone .ac-hero { gap: 12px; }
+html.phone .ac-orb, html.phone .ac-av { width: 52px; height: 52px; }
+html.phone .set-subs { padding-left: 30px; gap: 8px; }
+
+/* myProjects */
+html.phone .pj-root { flex-direction: column; gap: 12px; }
+html.phone .pj-bar { flex-wrap: wrap; gap: 8px; }
+html.phone .pj-title { flex: 1 1 100%; width: auto; font-size: 22px; }
+html.phone .pj-grid, html.phone .pj-root > .pj-grid:last-child { grid-template-columns: 1fr; overflow: visible; margin: 0; padding: 0; flex: none; }
+html.phone .pj-board { margin: 0; padding: 0 0 10px; flex: none; scroll-snap-type: x mandatory; }
+html.phone .pj-col, html.phone .pj-newstep { width: 82vw; max-height: none; scroll-snap-align: start; }
+html.phone .pj-overlay { padding: 10px; }
+html.phone .pj-modal { padding: 18px; }
+html.phone .tl-track { flex: none; min-height: 0; overflow-x: auto; padding: 12px 12px 22px; justify-content: flex-start; }
+html.phone .tl-parts, html.phone .tl-weeks { min-width: calc(var(--w) * 38px); }
+html.phone .tl-wk { height: 44px; }
+html.phone .tl-part { height: 38px; }
+html.phone .tl-bar { flex-wrap: wrap; }
+html.phone .tl-cols { margin: 0; padding: 0 0 8px; }
+html.phone .up-wrap { flex: none; height: calc(100dvh - 480px); min-height: 240px; }
+html.phone .up-list { margin: 0; padding: 0; }
+html.phone .pj-auth { margin: 16px auto; padding: 20px; }
+
+/* lift stats + diet */
+html.phone .ls-wrap { grid-template-columns: minmax(0, 1fr); gap: 12px; flex: none; }
+html.phone #lsPage > .ls-wrap { padding-top: 6px; }
+html.phone .ls-items { max-height: 200px; }
+html.phone .ls-main { overflow: visible; }
+html.phone .ls-chartwrap { flex: none; }
+html.phone .ls-chart { height: 210px; flex: none; }
+html.phone .ls-stats, html.phone .ls-stats.run { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+html.phone .ls-stat { padding: 8px 10px; min-width: 0; }
+html.phone .ls-stat b { font-size: 16px; }
+html.phone .dt-actions { margin-left: 0; width: 100%; flex-wrap: wrap; }
+html.phone .dt-actions > * { flex: 1; }
+html.phone .dt-nutrients .radar { flex: none; }
+html.phone .dt-modal, html.phone .dt-modal.dt-wide, html.phone .lg-modal, html.phone .cal-modal { width: 100%; }
+html.phone .ls-ax { font-size: 20px; }
+html.phone .ls-unit { font-size: 11px; }
+html.phone .subtabs, html.phone .tl-track, html.phone .pj-board, html.phone .tl-cols { scrollbar-width: none; }
+html.phone .subtabs::-webkit-scrollbar, html.phone .tl-track::-webkit-scrollbar, html.phone .pj-board::-webkit-scrollbar, html.phone .tl-cols::-webkit-scrollbar { display: none; }
+html.phone .fx-stats.st-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html.phone .fx-stat b small { font-size: 12px; }
+html.phone .fx-stats.st-row > * { min-width: 0; }
+html.phone .fx-stats.st-row .dt-actions { grid-column: 1 / -1; }
+html.phone .pj-bar .pj-spacer { display: none; }
+html.phone .pj-me, html.phone .pj-status { flex-shrink: 0; }

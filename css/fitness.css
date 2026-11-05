@@ -1,0 +1,301 @@
+/* myFitness, myLifting, myDiet. Colors, radii and motion come from theme.css tokens. */
+.fx-wrap { flex: 1; display: flex; flex-direction: column; gap: var(--gap); min-height: 0; overflow: hidden; padding: 14px; margin: -14px; }
+.fx-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); }
+.fx-stats.two { grid-template-columns: 1fr 1fr; }
+.fx-stat { padding: 18px 20px; border-radius: var(--r-xl); display: flex; flex-direction: column; gap: 4px; }
+.fx-stat b { font-size: 34px; font-weight: 300; letter-spacing: -0.02em; line-height: 1.1; }
+.fx-stat b small { font-size: 18px; color: var(--muted); }
+.fx-stat span { font-size: 13px; color: var(--muted); }
+.fx-stat em { font-style: normal; font-size: 12px; color: var(--muted); opacity: .7; }
+.fx-grid { display: grid; grid-template-columns: 1.15fr 1fr; grid-auto-rows: auto; gap: var(--gap); }
+.fx-split { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--gap); align-items: start; }
+.fx-col { display: flex; flex-direction: column; gap: 14px; }
+.fx-card { padding: 22px; border-radius: var(--r-xl); display: flex; flex-direction: column; gap: 12px; }
+.fx-card[data-go] { cursor: pointer; }
+.fx-h { display: flex; align-items: center; gap: 10px; }
+.fx-h h3 { font-size: 24px; font-weight: 500; }
+.fx-demo { margin-left: auto; font-size: 11px; color: var(--muted); padding: 4px 10px; border-radius: 99px; background: var(--well); letter-spacing: .04em; }
+.fx-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fx-big { font-size: 42px; font-weight: 300; letter-spacing: -0.02em; }
+.fx-big small { font-size: 15px; color: var(--muted); }
+
+/* Radar */
+.radar { width: 100%; max-height: 360px; overflow: visible; align-self: center; }
+.fx-radar-card.fx-lg .radar { max-height: 460px; }
+.rd-ring { fill: none; stroke: rgba(255,255,255,.06); stroke-width: 1; }
+.rd-outer { fill: rgba(255,255,255,.02); stroke: rgba(255,255,255,.16); stroke-width: 1.5; }
+.rd-spoke { stroke: rgba(255,255,255,.06); }
+.rd-fill { stroke: var(--name-3); stroke-width: 1.5; stroke-linejoin: round; }
+.rd-dot { fill: var(--my); }
+.rd-shape { animation: rdGrow .9s var(--ease) both; }
+@keyframes rdGrow { from { transform: scale(.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .rd-shape { animation: none; } }
+.rd-name { fill: var(--text); font-size: 12px; font-family: var(--font); }
+.rd-val { fill: var(--muted); font-size: 13px; font-weight: 500; font-family: var(--font); }
+
+/* Rings */
+.fx-ring { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.fx-ring circle { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 10; }
+.fx-ring .arc { stroke: url(#ig); stroke-linecap: round; stroke-dasharray: 327; transition: stroke-dashoffset .9s var(--ease); }
+.fx-cal { position: relative; width: 170px; height: 170px; align-self: center; flex-shrink: 0; }
+.fx-cal-in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.fx-cal-in b { font-size: 34px; font-weight: 300; }
+.fx-cal-in span { font-size: 12px; color: var(--muted); }
+.fx-calrow { display: flex; align-items: center; gap: 28px; }
+.fx-calnums { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.fx-calnums div { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.06); padding-bottom: 8px; }
+.fx-calnums b { font-size: 22px; font-weight: 400; }
+
+/* Nutrients, bars, sessions */
+.fx-nuts { display: flex; flex-direction: column; gap: 10px; }
+.fx-nut { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.fx-nut .prog { margin: 0; background: rgba(255,255,255,.1); }
+.fx-nut .prog b { background: linear-gradient(90deg, var(--icon-a), var(--icon-b)); }
+.fx-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; height: 150px; align-items: end; }
+.fx-bar { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; }
+.fx-bar i { width: 100%; max-width: 34px; border-radius: 8px 8px 4px 4px; background: var(--bar); opacity: .7; }
+.fx-bar.hl i { background: linear-gradient(180deg, var(--icon-b), var(--accent)); opacity: 1; box-shadow: 0 0 14px rgba(201,167,255,.45); }
+.fx-bv { font-size: 11px; color: var(--muted); }
+.fx-session { padding: 16px 18px; border-radius: var(--r-lg); display: flex; flex-direction: column; gap: 10px; }
+.fx-session.flat { padding: 0; }
+.fx-sname { font-size: 17px; font-weight: 500; }
+.fx-lifts { display: flex; flex-direction: column; }
+.fx-lift { display: grid; grid-template-columns: 1fr auto 80px; gap: 12px; align-items: center; font-size: 14px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.06); }
+.fx-lift b { font-weight: 500; text-align: right; }
+.fx-prs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fx-pr { padding: 14px; border-radius: var(--r-md); background: var(--well); display: flex; flex-direction: column; gap: 2px; }
+.fx-pr b { font-size: 22px; font-weight: 400; background: var(--name); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: flow var(--name-flow) ease-in-out infinite; }
+.fx-meal { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: var(--r-md); }
+.fx-kcal { text-align: right; } .fx-kcal b { font-size: 18px; font-weight: 500; display: block; }
+
+@media (max-width: 1100px) { .fx-grid, .fx-split { grid-template-columns: 1fr; } .fx-stats { grid-template-columns: 1fr 1fr; } }
+.fx-dash .radar { max-height: 210px; margin: 4px 0; }
+
+/* myLifting: smaller muscle chart + log workout */
+.fx-radar-card.fx-sm .radar { max-height: 300px; }
+.lg-log { margin-left: auto; padding: 8px 14px; font-size: 13px; }
+.lg-none { padding: 6px 0 4px; }
+.lg-modal { width: min(600px, 100%); }
+.lg-splits { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.lg-split { font: inherit; color: var(--text); text-align: left; padding: 16px; border-radius: var(--r-lg); cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.lg-split b { font-size: 17px; font-weight: 500; }
+.lg-split.custom { border-style: dashed; background: transparent; }
+.lg-edit { display: flex; flex-direction: column; gap: 8px; }
+.lg-exs { display: flex; flex-direction: column; gap: 10px; }
+.lg-ex { padding: 12px 14px; border-radius: var(--r-lg); display: flex; flex-direction: column; gap: 8px; }
+.lg-name { font-size: 15px; font-weight: 500; background: transparent; border-color: transparent; padding: 6px 8px; }
+.lg-name:focus { background: var(--well); }
+.lg-sets { display: flex; flex-direction: column; gap: 6px; }
+.lg-set { display: grid; grid-template-columns: 18px 70px auto 80px auto 1fr; align-items: center; gap: 8px; }
+.lg-set .pj-in { padding: 7px 10px; text-align: center; }
+.lg-set .pj-x { justify-self: end; }
+.lg-set input { -moz-appearance: textfield; appearance: textfield; }
+.lg-set input::-webkit-inner-spin-button, .lg-set input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+/* myLifting: muscle balance card is 40% narrower (was ~52% of the row, now ~31%) */
+.fx-split.lift { grid-template-columns: .46fr 1fr; }
+.fx-empty { padding: 18px 4px; display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 1100px) { .fx-split.lift { grid-template-columns: 1fr; } }
+.lg-actions { margin-left: auto; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.lg-actions .lg-log { margin-left: 0; }
+
+/* myLifting: two full-height pages that snap (overview, then lift stats) */
+.lg-pages { flex: 1; overflow: hidden; margin: -14px; position: relative; }
+.lg-track { height: 100%; } /* will-change is added only while gliding so text stays sharp */
+.lg-page { height: 100%; padding: 14px; display: flex; flex-direction: column; position: relative; }
+.lg-page > .fx-wrap { margin: 0; padding: 0 0 34px; }
+.lg-next { position: absolute; left: 50%; bottom: 10px; translate: -50% 0; font: inherit; font-size: 12px; letter-spacing: .06em; color: var(--muted);
+  background: var(--well); border: 1px solid var(--edge-soft); border-radius: 99px; padding: 6px 14px; cursor: pointer; animation: nudge 2.4s ease-in-out infinite; }
+.lg-next:hover { color: var(--text); }
+.lg-next.up { top: 2px; bottom: auto; }
+#lsPage > .ls-wrap { padding-top: 30px; }
+@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+
+/* Lift stats */
+.ls-wrap { flex: 1; display: grid; grid-template-columns: 280px 1fr; gap: var(--gap); min-height: 0; }
+.ls-list { min-height: 0; }
+.ls-items { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; min-height: 0; margin: 0 -6px; padding: 0 6px; }
+.ls-item { font: inherit; font-size: 14px; color: var(--muted); background: none; border: 1px solid transparent; border-radius: var(--r-md); padding: 10px 12px; display: flex; justify-content: space-between; cursor: pointer; text-align: left; transition: background var(--t-fast), color var(--t-fast); }
+.ls-item:hover { color: var(--text); background: rgba(255,255,255,.06); }
+.ls-item.on { color: var(--text); background: var(--glass-hover); border-color: var(--edge); }
+.ls-main { min-height: 0; overflow: hidden; }
+.ls-seg { margin-left: auto; }
+.ls-metrics { align-self: flex-start; }
+.ls-chart { width: 100%; height: auto; max-height: 230px; overflow: visible; }
+.ls-grid { stroke: rgba(255,255,255,.07); }
+.ls-ax { fill: var(--muted); font-size: 11px; font-family: var(--font); }
+.ls-line { fill: none; stroke: var(--name-3); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.ls-dot { fill: var(--my); stroke: var(--name-2); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.ls-nochart { height: 260px; display: grid; place-items: center; border-radius: var(--r-md); background: var(--well); }
+.ls-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ls-stat { padding: 14px; border-radius: var(--r-md); background: var(--well); display: flex; flex-direction: column; gap: 4px; }
+.ls-stat b { font-size: 22px; font-weight: 400; } .ls-stat b small { font-size: 13px; color: var(--muted); }
+.ls-stat span { font-size: 12px; color: var(--muted); }
+.ls-stat.up b { color: var(--good); } .ls-stat.down b { color: var(--pri-3); }
+.ls-empty { align-self: center; justify-self: center; grid-column: 1 / -1; width: min(480px, 100%); text-align: center; }
+@media (max-width: 1100px) { .ls-wrap { grid-template-columns: 1fr; } .ls-stats { grid-template-columns: 1fr 1fr; } }
+.fx-cal.sm { width: 120px; height: 120px; } .fx-cal.sm .fx-cal-in b { font-size: 22px; }
+.td-head h2 .fx-demo, .cal-head .fx-demo, .tm-gh .fx-demo { margin-left: 10px; vertical-align: middle; }
+
+/* ===== Fit-to-screen layout: pages never scroll, so every grid fills exactly the space it has ===== */
+.fx-wrap { height: 100%; gap: 18px; }
+.fx-grid, .fx-split { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr); align-items: stretch; gap: 18px; }
+.fx-grid.three { grid-template-columns: 1.15fr 1fr 1fr; }
+.fx-col { min-height: 0; gap: 18px; }
+.fx-col > * { flex-shrink: 0; }
+.fx-col > .fx-fill { flex: 1 1 0; min-height: 0; }
+.fx-card { min-height: 0; overflow: hidden; padding: 20px; gap: 10px; }
+.fx-span2 { grid-column: span 2; }
+.fx-h h3 { font-size: 21px; }
+/* charts shrink/grow to the space left in their card */
+.fx-radar-card .radar, .fx-radar-card.fx-sm .radar, .fx-radar-card.fx-lg .radar { flex: 1 1 0; min-height: 0; width: 100%; height: 100%; max-height: none; }
+.fx-fill .fx-bars { flex: 1 1 0; height: auto; min-height: 0; }
+.fx-stats { gap: 18px; flex-shrink: 0; }
+.fx-stat { padding: 14px 18px; }
+.fx-stat b { font-size: 28px; }
+.fx-cal { width: 124px; height: 124px; }
+.fx-cal-in b { font-size: 26px; }
+.fx-calrow { gap: 22px; }
+.fx-calnums { gap: 6px; }
+.fx-calnums div { padding-bottom: 5px; }
+.fx-calnums b { font-size: 18px; }
+.fx-nuts { gap: 8px; }
+.fx-nut { gap: 4px; font-size: 13px; }
+.fx-prs { gap: 8px; }
+.fx-pr { padding: 10px 12px; }
+.fx-pr b { font-size: 18px; }
+.fx-list { display: flex; flex-direction: column; gap: 8px; flex: 1 1 0; min-height: 0; }
+.fx-meal { padding: 11px 14px; }
+.fx-total { margin-top: auto; text-align: right; }
+.fx-total b { color: var(--text); font-weight: 500; }
+.fx-fill .fx-lifts { overflow: hidden; }
+.fx-lift { padding: 7px 0; }
+/* Lift stats: the chart takes whatever height is left */
+.ls-main { display: flex; flex-direction: column; }
+.ls-chart { flex: 1 1 0; min-height: 0; height: 100%; max-height: none; }
+.ls-nochart { flex: 1 1 0; height: auto; }
+.ls-stats { grid-template-columns: repeat(6, 1fr); gap: 8px; flex-shrink: 0; }
+.ls-stat { padding: 10px 12px; }
+.ls-stat b { font-size: 18px; }
+.ls-list { min-height: 0; }
+.lg-page > .fx-wrap { padding-bottom: 30px; }
+#lsPage > .ls-wrap { padding-top: 28px; }
+/* myLifting: records sit in one row so the last session has room, even in a window */
+.fx-split.lift .fx-prs { grid-template-columns: repeat(4, 1fr); }
+.fx-split.lift .fx-pr b { font-size: 16px; }
+.fx-split.lift .fx-pr .p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* myLifting polish */
+.fx-h h3 + .fx-demo { margin-left: 10px; }
+.fx-h .lg-actions { margin-left: auto; }
+.fx-split.lift .fx-foot .pj-spacer { flex-basis: 100%; height: 0; }
+.lg-earlier-h { margin-top: 6px; }
+.lg-earlier { display: flex; flex-direction: column; }
+.lg-erow { display: grid; grid-template-columns: 90px 1fr auto; gap: 12px; align-items: center; padding: 8px 2px; border-top: 1px solid rgba(255,255,255,.06); font-size: 14px; }
+.lg-erow b { font-weight: 500; }
+[data-fit] { flex: 1 1 0; min-height: 0; overflow: hidden; }
+/* myDiet polish: big centered calories ring, meals show their share of the day */
+.fx-fill .fx-calrow { flex: 1 1 0; min-height: 0; justify-content: center; }
+.fx-fill .fx-cal { width: 168px; height: 168px; }
+.fx-fill .fx-cal-in b { font-size: 34px; }
+.fx-fill .fx-calnums { flex: 0 1 220px; gap: 10px; }
+.fx-fill .fx-calnums b { font-size: 22px; }
+.fx-meal-col { flex-direction: column; align-items: stretch; gap: 8px; padding: 14px 16px; }
+.fx-meal-col .prog { flex: none; margin: 0; height: 6px; background: rgba(255,255,255,.1); }
+.fx-meal-col .prog b { background: linear-gradient(90deg, var(--icon-a), var(--icon-b)); }
+/* Lift stats: editable entries */
+.ls-actions { display: flex; gap: 8px; margin-left: 14px; }
+.ls-dot { cursor: pointer; transition: r .15s; } .ls-dot:hover { r: 7; }
+.en-list { display: flex; flex-direction: column; gap: 8px; max-height: 56vh; overflow-y: auto; padding: 4px; margin: -4px; }
+.en-row { display: grid; grid-template-columns: 130px 1fr auto auto auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: var(--r-md); }
+.en-row b { font-weight: 500; }
+/* Lift stats chart: 1RM label + hover tooltips */
+.ls-chartwrap { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+.ls-chartwrap .ls-chart { flex: 1 1 0; }
+.ls-unit { align-self: flex-start; font-size: 12px; font-weight: 600; letter-spacing: .06em; color: var(--my); padding: 4px 10px; border-radius: 99px; background: var(--well); border: 1px solid var(--edge-soft); cursor: help; }
+.tip { position: relative; }
+.tip::after { content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 8px); white-space: nowrap; font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--text);
+  padding: 6px 10px; border-radius: 10px; background: rgba(40,24,60,.95); border: 1px solid var(--edge); opacity: 0; transform: translateY(-4px); pointer-events: none; z-index: 5;
+  transition: opacity .15s ease, transform .15s ease; }
+.tip:hover::after { opacity: 1; transform: none; }
+.ls-tip { position: absolute; z-index: 6; pointer-events: none; transform: translate(-50%, calc(-100% - 12px)); display: flex; flex-direction: column; gap: 2px; align-items: center; white-space: nowrap;
+  padding: 8px 12px; border-radius: 12px; background: rgba(40,24,60,.95); border: 1px solid var(--edge); box-shadow: 0 10px 24px rgba(8,0,20,.5); }
+.ls-tip.flip { transform: translate(calc(-100% + 16px), calc(-100% - 12px)); align-items: flex-end; }
+.ls-tip.flipl { transform: translate(-16px, calc(-100% - 12px)); align-items: flex-start; }
+.ls-tip b { font-size: 16px; font-weight: 600; } .ls-tip span { font-size: 12px; color: var(--muted); } .ls-tip em { font-style: normal; font-size: 12px; color: var(--my); }
+
+/* Day streak: atom in purple-white fire; the longer the streak, the bigger and livelier the flames */
+.fx-stats.st-row { display: flex; }
+.fx-stats.st-row > .fx-stat:not(.fx-streak) { flex: 1; }
+.fx-streak { display: flex; align-items: center; gap: 10px; padding: 0 18px 0 2px; cursor: default; flex-shrink: 0; }
+.fx-streak .st-word { font-size: 15px; color: var(--muted); align-self: center; margin-top: 8px; }
+.st-atom { stroke: var(--icon-a); fill: none; } .st-atom circle { fill: var(--icon-a); }
+.fx-streak:not(.heat0) .st-atom { stroke: #1d0f30; } .fx-streak:not(.heat0) .st-atom circle { fill: #1d0f30; }
+
+.fx-streak b { font-size: 34px; font-weight: 400; }
+.st-logo { width: 58px; height: 58px; overflow: visible; }
+.st-fire { transform-origin: 32px 60px; transform: scale(var(--fs, 0)); opacity: var(--fo, 0); transition: transform .6s var(--ease), opacity .6s ease; }
+.fl { transform-origin: 32px 60px; }
+.f1 { fill: url(#stFire); opacity: .55; animation: flick1 var(--fspd, 1.6s) ease-in-out infinite; }
+.f2 { fill: url(#stFireIn); opacity: .9; animation: flick2 calc(var(--fspd, 1.6s) * .8) ease-in-out infinite; }
+@keyframes flick1 { 0%, 100% { transform: scaleY(1) skewX(0); } 30% { transform: scaleY(1.08) skewX(-3deg); } 60% { transform: scaleY(.94) skewX(2deg); } }
+@keyframes flick2 { 0%, 100% { transform: scaleY(1) scaleX(1); } 40% { transform: scaleY(.92) scaleX(1.04); } 70% { transform: scaleY(1.07) scaleX(.97); } }
+.st-atom { transition: opacity .4s; }
+.heat0 .st-atom { opacity: .45; }
+.heat1 { --fs: .62; --fo: .8; --fspd: 1.8s; }
+.heat2 { --fs: .8; --fo: .9; --fspd: 1.4s; }
+.heat3 { --fs: .95; --fo: 1; --fspd: 1.1s; }
+.heat4 { --fs: 1.12; --fo: 1; --fspd: .8s; }
+.heat3 .st-logo, .heat4 .st-logo { filter: drop-shadow(0 0 8px rgba(201,167,255,.55)); }
+.heat4 .st-logo { filter: drop-shadow(0 0 14px rgba(240,220,255,.75)); }
+@media (prefers-reduced-motion: reduce) { .fl { animation: none; } }
+.ls-stats.run { grid-template-columns: repeat(3, 1fr); }
+
+/* ===== myDiet ===== */
+.dt-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.dt-nutrients .radar { flex: 1 1 0; min-height: 0; }
+.dt-nutrients .fx-nuts { flex-shrink: 0; gap: 6px; }
+.dt-nutrients .fx-nut { font-size: 12px; gap: 3px; }
+.fx-nut.hit .prog b { background: linear-gradient(90deg, var(--good), #a8f0cf); }
+.dt-quick { cursor: pointer; }
+.dt-modal { width: min(640px, 100%); }
+.dt-modal.dt-wide { width: min(860px, 100%); }
+.dt-results { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; padding: 4px; margin: -4px; }
+.dt-results.sm { max-height: 26vh; }
+.dt-food { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--r-md); }
+.dt-food > div:first-child { flex: 1; min-width: 0; }
+.dt-portions { display: flex; gap: 4px; flex-shrink: 0; }
+.dt-portions .td-toggle { padding: 6px 10px; border-radius: 10px; background: var(--well); color: var(--text); font-size: 12px; }
+.dt-portions .td-toggle:hover { background: var(--glass-hover); }
+.dt-smoothie { cursor: pointer; }
+.dt-toast { opacity: 0; transition: opacity .3s; color: var(--good); }
+.dt-toast.show { opacity: 1; }
+.dt-sizes { align-self: flex-start; }
+.dt-parts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.dt-part { font: inherit; font-size: 13px; color: var(--text); padding: 10px 6px; border-radius: var(--r-md); cursor: pointer; }
+.dt-part.on { border-color: var(--icon-a); background: var(--glass-hover); }
+.dt-choose { display: flex; align-items: center; gap: 8px; }
+.dt-picked { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
+.dt-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+.dt-macros { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.dt-macros div { padding: 10px; border-radius: var(--r-md); background: var(--well); display: flex; flex-direction: column; gap: 2px; }
+.dt-macros b { font-size: 18px; font-weight: 500; } .dt-macros span { font-size: 11px; color: var(--muted); }
+.dt-addcols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+.dt-addcols > div { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dt-fields { display: flex; flex-direction: column; gap: 8px; }
+.dt-fields .pj-in { width: 110px; text-align: right; }
+.pj-btn[disabled] { opacity: .45; pointer-events: none; }
+/* Streak flame only: bigger and brighter as the streak grows */
+.fx-streak .st-logo { width: 46px; height: 46px; }
+.heat0 { --fs: .5;  --fo: .3;  --fspd: 2.4s; } .heat0 .st-logo { filter: grayscale(.6); }
+.heat1 { --fs: .62; --fo: .75; --fspd: 1.9s; } .heat1 .st-logo { filter: drop-shadow(0 0 4px rgba(201,167,255,.35)); }
+.heat2 { --fs: .78; --fo: .9;  --fspd: 1.5s; } .heat2 .st-logo { filter: drop-shadow(0 0 7px rgba(201,167,255,.5)) brightness(1.1); }
+.heat3 { --fs: .95; --fo: 1;   --fspd: 1.1s; } .heat3 .st-logo { filter: drop-shadow(0 0 11px rgba(220,200,255,.65)) brightness(1.25); }
+.heat4 { --fs: 1.15; --fo: 1;  --fspd: .8s;  } .heat4 .st-logo { filter: drop-shadow(0 0 16px rgba(245,235,255,.85)) brightness(1.45); }
+.heat4 .f2 { opacity: 1; }
+/* continuous heat (set per badge from the streak length, maxing out at 30 days) */
+.fx-streak.hot .st-logo { filter: drop-shadow(0 0 var(--glow) rgba(235,220,255,var(--ga))) brightness(var(--br)); }
+/* myLifting: muscle balance sits on the right */
+.fx-split.lift { grid-template-columns: 1fr .46fr; }
+.fx-split.lift > .fx-radar-card { order: 2; }
+.dt-choose { flex-wrap: wrap; } .dt-choose .dt-size { flex: 1; padding: 16px; font-size: 15px; }
+/* SVG text must never inherit the icon stroke (looks like a glow) */
+svg text { stroke: none; }

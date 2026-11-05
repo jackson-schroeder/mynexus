@@ -1,0 +1,27 @@
+{
+  "appId": "com.mynexus.app",
+  "productName": "myNexus",
+  "directories": {
+    "output": "dist/myNexus"
+  },
+  "files": [
+    "main.js",
+    "preload.js",
+    "package.json",
+    "index.html",
+    "projects.html",
+    "css/**",
+    "js/**",
+    "build/icon.png"
+  ],
+  "win": {
+    "target": "nsis",
+    "icon": "build/icon.ico"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "shortcutName": "myNexus",
+    "artifactName": "myNexus-Setup.exe"
+  }
+}

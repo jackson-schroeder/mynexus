@@ -1,0 +1,9 @@
+{
+  "appId": "com.mynexus.myprojects",
+  "productName": "myProjects",
+  "extraMetadata": { "name": "myprojects", "mode": "projects" },
+  "directories": { "output": "dist/myProjects" },
+  "files": ["main.js", "preload.js", "package.json", "projects.html", "css/**", "js/**"],
+  "win": { "target": "nsis" },
+  "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "shortcutName": "myProjects", "artifactName": "myProjects-Setup.exe" }
+}
