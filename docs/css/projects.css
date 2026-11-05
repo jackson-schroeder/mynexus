@@ -194,3 +194,9 @@ textarea.pj-in { resize: none; line-height: 1.5; }
 .af-box { display: flex; flex-direction: column; gap: 10px; }
 .af-box:empty { display: none; }
 .af-msg.ok { color: var(--muted); font-size: 13px; }
+/* Sign-in gate over the whole app */
+.gate { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; padding: 20px; overflow-y: auto; background: var(--bg-image); background-color: var(--bg); }
+.gate[hidden] { display: none; }
+.gate-card { margin: 0; }
+.gate-card h2 { font-size: 40px; }
+body.gated .navwrap { display: none; }

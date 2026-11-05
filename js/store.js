@@ -129,9 +129,15 @@ const Store = (() => {
   }
   async function start() {
     if (!sb) { emit(); return; }
+    // Stay signed in until you've been away 30 days in a row
+    const IDLE = 30 * 864e5, touch = () => { try { localStorage.setItem('nx.active', Date.now()); } catch {} };
+    let last = 0; try { last = Number(localStorage.getItem('nx.active')) || 0; } catch {}
+    if (me && last && Date.now() - last > IDLE) await signOut();
+    touch(); setInterval(touch, 60000); addEventListener('focus', touch); document.addEventListener('visibilitychange', touch);
     await checkSetup();
     const { data } = await sb.auth.getSession();
     if (data.session) await setUser(data.session.user);
+    else if (me && navigator.onLine) { me = null; save('me', null); emit(); } // the saved login is gone: ask for it again
     addEventListener('online', () => { status = 'syncing'; emit(); flush(); pull(); });
     addEventListener('offline', () => { status = 'offline'; emit(); });
     // Safety net alongside live updates: refresh when the window is focused and once a minute
