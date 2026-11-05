@@ -183,3 +183,24 @@ input[type="date"].pj-in, input[type="time"].pj-in { color-scheme: dark; }
 .cal-block { z-index: 2; }
 
 .cal-pc.tinted { background: color-mix(in srgb, var(--pc) 15%, var(--glass-2)); border-color: color-mix(in srgb, var(--pc) 42%, transparent); }
+
+/* myNotes */
+.nt-wrap { flex: 1; display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: var(--gap); min-height: 0; min-width: 0; }
+.nt-side, .nt-edit { border-radius: var(--r-xl); padding: 20px; display: flex; flex-direction: column; gap: 14px; min-height: 0; min-width: 0; }
+.nt-side h2 { font-size: 30px; font-weight: 500; }
+.nt-search { display: flex; align-items: center; gap: 10px; padding: 0 14px; height: 44px; border-radius: var(--r-md); }
+.nt-search svg { width: 16px; height: 16px; color: var(--muted); flex-shrink: 0; }
+.nt-search input { flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--text); background: none; border: 0; outline: none; }
+.nt-list { flex: 1 1 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 6px; margin: -6px; }
+.nt-row { font: inherit; color: var(--text); text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: var(--r-md); cursor: pointer; flex-shrink: 0; }
+.nt-row.on { border-color: var(--edge); background: var(--glass-hover); }
+.nt-t { font-size: 15px; font-weight: 500; overflow-wrap: break-word; }
+.nt-pin { font-style: normal; font-size: 12px; margin-right: 6px; }
+.nt-sub { overflow-wrap: break-word; } .nt-sub b { font-weight: 500; color: var(--text); opacity: .8; margin-right: 6px; }
+.nt-empty, .nt-blank { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 30px 10px; color: var(--muted); }
+.nt-bar { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.nt-back { display: none; }
+.nt-when { white-space: nowrap; }
+.nt-title { font: inherit; font-size: 28px; font-weight: 500; letter-spacing: -0.02em; color: var(--text); background: none; border: 0; outline: none; resize: none; overflow: hidden; padding: 4px 2px; line-height: 1.25; flex-shrink: 0; }
+.nt-body { flex: 1 1 0; min-height: 0; font: inherit; font-size: 16px; line-height: 1.6; color: var(--text); background: none; border: 0; outline: none; resize: none; padding: 2px; }
+.nt-title::placeholder, .nt-body::placeholder { color: var(--muted); }

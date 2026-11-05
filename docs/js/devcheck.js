@@ -20,7 +20,7 @@ async function fitAudit(only) {
     });
     return [...new Set(out)];
   };
-  const all = ['Dashboard', 'Fitness/Lifting', 'Fitness/Running', 'Fitness/Diet', 'Time/Todo', 'Time/Calendar', 'Time/Goals', 'Time/Time', 'Projects', 'Finance', 'Settings'];
+  const all = ['Dashboard', 'Fitness/Lifting', 'Fitness/Running', 'Fitness/Diet', 'Time/Todo', 'Time/Calendar', 'Time/Notes', 'Time/Goals', 'Time/Time', 'Projects', 'Finance', 'Settings'];
   const pages = only ? all.filter(p => only.includes(p)) : all, stats = !only || only.includes('Lift stats'), dhist = !only || only.includes('Diet history');
   const was = { page: current, demo: Personal.demoOn, app: document.body.classList.contains('app'), windowed: document.body.classList.contains('windowed') };
   const report = {};

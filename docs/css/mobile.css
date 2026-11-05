@@ -224,3 +224,13 @@ html.phone .pj-roles { margin: 0; padding: 0; overflow: visible; flex: none; }
 /* when the top row is crowded (e.g. "myProjects" + search + settings) the search shows just its icon until tapped */
 html.phone .search { container-type: inline-size; }
 @container (max-width: 120px) { html.phone .search input::placeholder { color: transparent; } }
+
+/* myNotes: list first, tap a note to write, ← Notes to go back */
+html.phone .nt-wrap { grid-template-columns: minmax(0, 1fr); gap: 0; flex: none; height: calc(100dvh - 170px); min-height: 360px; }
+html.phone .nt-wrap:not(.editing) .nt-edit { display: none; }
+html.phone .nt-wrap.editing .nt-side { display: none; }
+html.phone .nt-side, html.phone .nt-edit { padding: 14px; }
+html.phone .nt-back { display: inline-flex; }
+html.phone .nt-when { display: none; }
+html.phone .nt-title { font-size: 24px; }
+html.phone .nt-bar .pj-btn { padding-left: 12px; padding-right: 12px; }

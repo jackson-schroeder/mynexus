@@ -18,6 +18,7 @@ const Projects = (() => {
   Store.subscribe(() => {
     if (!root || dragging) return;
     const a = document.activeElement;
+    if (a && a.id === 'upMsg' && view.tab === 'updates') { refreshUpdates(); return; }
     if (a && root.contains(a) && /INPUT|TEXTAREA/.test(a.tagName)) { pendingRender = true; return; }
     render();
     modal?.refresh?.();
@@ -193,41 +194,55 @@ const Projects = (() => {
 
   // Updates: only unread ones first. Scrolling marks the ones you actually saw; they clear when you leave this tab.
   // Updates are also a group conversation: messages are stored as updates whose text starts with "msg:".
-  let pendingSeen = new Set(), showPast = false, seenObserver = null, sentNow = new Set();
-  const MSG = 'msg:';
+  let pendingSeen = new Set(), showPast = false, seenObserver = null, sentNow = new Set(), expiryTimer = null;
+  const MSG = 'msg:', STAY = 5 * 60 * 1000;
+  const readAt = (() => { let m = {}; try { m = JSON.parse(localStorage.getItem('up.readAt') || '{}'); } catch {} return m; })();
+  const saveReadAt = () => { const cut = Date.now() - 864e5; Object.keys(readAt).forEach(k => { if (readAt[k] < cut) delete readAt[k]; }); try { localStorage.setItem('up.readAt', JSON.stringify(readAt)); } catch {} };
   function updatesView(pid) {
     const me = Store.me?.id, seen = Store.seenIds();
-    const unread = Store.unread(pid), mine = Store.updates(pid).filter(u => sentNow.has(u.id)); // what you just sent shows right away
-    const past = Store.updates(pid).filter(u => (u.user_id === me || seen.has(u.id)) && !sentNow.has(u.id));
+    const now = Date.now(), unread = Store.unread(pid), all = Store.updates(pid);
+    // read or sent within the last 5 minutes: still shown at the top
+    const recent = all.filter(u => !unread.includes(u) && ((readAt[u.id] && now - readAt[u.id] < STAY) || (u.user_id === me && now - new Date(u.created_at).getTime() < STAY) || sentNow.has(u.id)));
+    const past = all.filter(u => !unread.includes(u) && !recent.includes(u) && (u.user_id === me || seen.has(u.id)));
+    clearTimeout(expiryTimer);
+    const soon = Math.min(...recent.map(u => Math.min(readAt[u.id] ? readAt[u.id] + STAY : Infinity, u.user_id === me ? new Date(u.created_at).getTime() + STAY : Infinity)).filter(t => t > now));
+    if (isFinite(soon)) expiryTimer = setTimeout(() => { if (view.tab === 'updates' && root) render(); }, soon - now + 800);
     const item = (u, cls) => {
       const msg = u.text.startsWith(MSG), who = `@${esc(Store.username(u.user_id))}`;
       return `<div class="tile up-item ${cls}${msg ? ' msg' : ''}${msg && u.user_id === me ? ' mine' : ''}" data-up="${u.id}"><span class="pj-av">${initials(Store.username(u.user_id))}</span>
         <div>${msg ? `<div class="p"><b>${who}</b> · ${ago(u.created_at)}</div><div class="it up-text">${esc(u.text.slice(MSG.length))}</div>`
           : `<div class="it"><b>${who}</b> ${esc(u.text)}</div><div class="p">${ago(u.created_at)}</div>`}</div></div>`;
     };
-    const feed = [...unread, ...mine].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    const feed = [...unread, ...recent].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
     return `<div class="up-wrap"><div class="up-list">
       ${Store.v2Missing ? '<p class="p pj-err">Run supabase/projects-v2.sql in Supabase to share updates with your team.</p>' : ''}
-      ${feed.length ? `<div class="tm-gh">New · ${unread.length}</div>${feed.map(u => item(u, sentNow.has(u.id) ? 'past' : 'unread')).join('')}` : '<div class="p up-none">You\'re all caught up.</div>'}
+      ${feed.length ? `<div class="tm-gh">${unread.length ? `New · ${unread.length}` : 'Recent'}</div>${feed.map(u => item(u, unread.includes(u) ? 'unread' : 'past')).join('')}` : '<div class="p up-none">You\'re all caught up.</div>'}
       <button class="tile pj-btn up-past" data-act="pastupd">${showPast ? 'Hide past updates' : `View past updates (${past.length})`}</button>
       ${showPast ? past.map(u => item(u, 'past')).join('') : ''}</div>
       <div class="tile up-compose"><textarea class="pj-in" id="upMsg" data-grow rows="1" placeholder="Write an update to the group…"></textarea><button class="tile pj-btn primary" data-act="sendupd">Send</button></div></div>`;
+  }
+  function refreshUpdates() { // new messages from others show up right away, even while you're typing a reply
+    const cur = root?.querySelector('.up-list'); if (!cur || view.name !== 'board') return;
+    const tmp = document.createElement('div'); tmp.innerHTML = updatesView(view.id);
+    const next = tmp.querySelector('.up-list'); if (next) { cur.innerHTML = next.innerHTML; watchSeen(); }
   }
   function sendUpdate() {
     const box = root.querySelector('#upMsg'), text = box?.value.trim();
     if (!text) return;
     const row = Store.note(view.id, MSG + text);
     if (row) sentNow.add(row.id);
+    setTimeout(() => root.querySelector('.up-list')?.scrollTo(0, 0), 60); // show what you just wrote
     box.value = ''; grow(box);
   }
   function watchSeen() {
     seenObserver?.disconnect();
     const list = root?.querySelector('.up-list');
     if (!list) return;
-    seenObserver = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio > .6) pendingSeen.add(e.target.dataset.up); }), { root: list, threshold: [.6] });
+    seenObserver = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio > .6) { pendingSeen.add(e.target.dataset.up); if (!readAt[e.target.dataset.up]) readAt[e.target.dataset.up] = Date.now(); } }), { root: list, threshold: [.6] });
     list.querySelectorAll('.up-item.unread').forEach(el => seenObserver.observe(el));
   }
   function commitSeen() {
+    saveReadAt();
     if (pendingSeen.size && view.id) Store.markSeen(view.id, [...pendingSeen]);
     pendingSeen = new Set();
   }
@@ -464,12 +479,13 @@ const Projects = (() => {
     if (canEdit) {
       el.querySelector('#cMove')?.addEventListener('change', e => { const to = e.target.value, c2 = Store.get('cards', id); if (to === c2.step_id) return; Store.moveCard(id, to, Store.cards(to).length); Store.note(pid, `moved “${c2.title}” to ${Store.get('steps', to).name}`); });
       el.querySelector('#cPhase')?.addEventListener('change', e => tlAssign(id, e.target.value));
-      el.querySelector('#cTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
       el.querySelector('#cTitle').addEventListener('change', e => e.target.value.trim() && Store.update('cards', id, { title: e.target.value.trim() }));
       desc.addEventListener('change', () => Store.update('cards', id, { description: desc.value }));
       el.querySelector('#cAssign').addEventListener('keydown', e => {
         if (e.key !== 'Enter') return;
         const name = e.target.value.replace(/^@/, '').trim();
+        if (!name) return; // nothing typed: Enter closes the card (handled below)
+        e.stopPropagation();
         const m = Store.members(pid).find(x => Store.username(x.user_id).toLowerCase() === name.toLowerCase());
         if (!m) { e.target.value = '@'; e.target.title = `@${name} isn't in this project`; return; }
         const cur = Store.get('cards', id);
@@ -484,7 +500,7 @@ const Projects = (() => {
     });
     const send = () => { const t = el.querySelector('#cMsg'); if (t.value.trim()) { Store.comment(Store.get('cards', id), t.value.trim()); Store.note(pid, `commented on “${Store.get('cards', id).title}”: ${t.value.trim().slice(0, 80)}`); log(`Commented on “${Store.get('cards', id).title}”`); t.value = ''; } };
     el.querySelector('#cSend')?.addEventListener('click', send);
-    el.querySelector('#cMsg')?.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+    el.querySelector('#cMsg')?.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && e.target.value.trim()) { e.preventDefault(); send(); } });
     el.querySelector('#cDel')?.addEventListener('click', async () => { if (!(await deleteCard(id))) cardModal(id); });
     el.addEventListener('click', async e => {
       const t = e.target;
@@ -620,6 +636,21 @@ const Projects = (() => {
     });
     document.addEventListener('pointerdown', e => { if (menuEl && !menuEl.contains(e.target)) closeMenu(); }, true);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+    // Pop-ups: Esc closes. On a card: Enter applies whatever you're editing; with nothing selected, Enter closes the card.
+    document.addEventListener('keydown', e => {
+      if (!modal || e.isComposing || e.defaultPrevented) return;
+      const t = document.activeElement, inside = t && modal.el.contains(t);
+      if (e.key === 'Escape') { if (inside) t.blur?.(); closeModal(); return; }
+      if (e.key !== 'Enter' || !modal.el.querySelector('#cTitle')) return;
+      if (inside) {
+        if (t.tagName === 'BUTTON') return;
+        if (t.id === 'cMsg') { if (e.shiftKey) return; e.preventDefault(); t.blur(); closeModal(); return; } // (a typed comment is sent on the box itself)
+        if (t.id === 'cDesc') { if (e.ctrlKey || e.metaKey) { e.preventDefault(); t.blur(); } return; } // Enter in the description is a new line; Ctrl+Enter applies
+        if (t.id === 'cAssign') { e.preventDefault(); t.blur(); closeModal(); return; } // (typing a name and pressing Enter is handled on the box itself)
+        if (t.matches('input, textarea, select')) { e.preventDefault(); t.blur(); return; } // apply
+      }
+      e.preventDefault(); closeModal(); // nothing selected
+    });
     addEventListener('blur', closeMenu);
     root.addEventListener('change', e => {
       const t = e.target;

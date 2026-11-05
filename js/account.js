@@ -53,7 +53,7 @@ const Account = (() => {
   }
 
   // Tabs: hide any tab (and its dashboard card) you don't use; turn it back on anytime
-  const TABS = [['Fitness', ['Lifting', 'Running', 'Diet']], ['Time', ['Todo', 'Calendar', 'Goals', 'Time']], ['Projects', []], ['Finance', []]];
+  const TABS = [['Fitness', ['Lifting', 'Running', 'Diet']], ['Time', ['Todo', 'Calendar', 'Notes', 'Goals', 'Time']], ['Projects', []], ['Finance', []]];
   const tgl = (path, on, label, sub) => `<label class="pj-perm set-tab${sub ? ' sub' : ''}"><input type="checkbox" data-tabtoggle="${path}" ${on ? 'checked' : ''}><span class="pj-toggle"></span><span><span class="my">my</span><span class="nm">${label}</span></span></label>`;
   function renderTabs() {
     const hidden = Personal.prefs.hidden || [];

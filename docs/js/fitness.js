@@ -554,38 +554,130 @@ const FitnessUI = (() => {
   };
   const nutrientRows = () => DEMO_DIET.nutrients.map(([n, a, g, u]) => `<div class="fx-nut"><div class="pj-row"><span>${n}</span><span class="pj-spacer"></span><span class="p">${a.toLocaleString()} / ${g.toLocaleString()} ${u}</span></div><div class="prog"><b style="width:${pct(a, g)}%"></b></div></div>`).join('');
 
-  // Both pages are laid out in three columns that exactly fill the screen (nothing scrolls, nothing is cut off)
+  // ---------- myRunning: log your runs (saved in your account). Example data only shows if you turned it on and have no runs. ----------
+  const RunLog = {
+    get all() { return (Personal.getKv('run.log', []) || []).slice().sort((a, b) => b.at - a.at); },
+    save: list => Personal.setKv('run.log', list),
+    get goal() { return Number(Personal.getKv('run.goal', 20)) || 20; }
+  };
+  const fmtTime = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`; };
+  const fmtPace = (secs, miles) => (miles > 0 && secs > 0 ? fmtTime(secs / miles) : '—');
+  const parseTime = str => { const p = String(str).trim().split(':').map(Number); if (!p.length || p.some(n => !isFinite(n) || n < 0)) return 0; return p.length === 1 ? p[0] * 60 : p.length === 2 ? p[0] * 60 + p[1] : p[0] * 3600 + p[1] * 60 + p[2]; };
+  const weekStart = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - d.getDay()); return d.getTime(); };
+  const r1 = n => Math.round(n * 10) / 10;
+  let runRoot = null;
+
+  function runModel() {
+    const runs = RunLog.all;
+    if (!runs.length) {
+      if (!Personal.demoOn) return null;
+      const r = DEMO_RUN;
+      return { demo: true, week: r.week, goal: r.goal, pace: r.pace, runsThisWeek: r.week.filter(Boolean).length, month: r.month.reduce((x, y) => x + y, 0), pts: runWeeks(), prs: r.prs,
+        thisWeek: r.log.filter(x => ['Mon', 'Thu'].includes(x[0])).map(([when, name, dist]) => ({ when, name, dist })), log: r.log.map(([when, name, dist, time, pace]) => ({ when, name, dist, time, pace })) };
+    }
+    const sow = weekStart(Date.now()), thisWeek = runs.filter(x => x.at >= sow), week = Array(7).fill(0);
+    thisWeek.forEach(x => { week[new Date(x.at).getDay()] += x.miles; });
+    const d28 = runs.filter(x => x.at >= Date.now() - 28 * 864e5), secs28 = d28.reduce((s, x) => s + x.secs, 0), mi28 = d28.reduce((s, x) => s + x.miles, 0);
+    const byWeek = new Map(); runs.forEach(x => { const k = weekStart(x.at); byWeek.set(k, (byWeek.get(k) || 0) + x.miles); });
+    const pts = [], d = new Date(weekStart(runs[runs.length - 1].at));
+    while (d.getTime() <= sow) { pts.push({ at: d.getTime() + 432e5, miles: r1(byWeek.get(d.getTime()) || 0) }); d.setDate(d.getDate() + 7); }
+    const mile = runs.filter(x => x.miles >= 1).sort((a, b) => a.secs / a.miles - b.secs / b.miles)[0];
+    const prs = [['Fastest pace', mile ? fmtPace(mile.secs, mile.miles) + ' /mi' : '—'], ['Longest run', Math.max(...runs.map(x => x.miles)).toFixed(1) + ' mi'], ['Best week', Math.max(...byWeek.values()).toFixed(1) + ' mi'], ['Total miles', runs.reduce((s, x) => s + x.miles, 0).toFixed(0) + ' mi']];
+    const lbl = t => new Date(t).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    return { demo: false, week, goal: RunLog.goal, pace: d28.length ? fmtPace(secs28, mi28) : '—', runsThisWeek: thisWeek.length, month: mi28, pts, prs,
+      thisWeek: thisWeek.map(x => ({ when: new Date(x.at).toLocaleDateString(undefined, { weekday: 'short' }), name: x.name || 'Run', dist: x.miles })),
+      log: runs.map(x => ({ id: x.id, when: lbl(x.at), name: x.name || 'Run', dist: x.miles, time: fmtTime(x.secs), pace: fmtPace(x.secs, x.miles) })) };
+  }
+
   function running(el) {
-    const r = DEMO_RUN, demo = Personal.demoOn, miles = r.week.reduce((x, y) => x + y, 0);
-    const days = RUN_RANGES.find(x => x[0] === runView.range)[2], pts = demo ? runWeeks().filter(p => p.at >= Date.now() - days * 864e5) : [];
+    runRoot = el;
+    const m = runModel(), days = RUN_RANGES.find(x => x[0] === runView.range)[2];
     const weekOf = at => 'Week of ' + new Date(at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    const thisWeekRuns = r.log.filter(x => ['Mon', 'Thu'].includes(x[0])); // demo: runs logged this week
-    el.innerHTML = `<div class="fx-wrap">${demo ? `
-      <div class="fx-stats">${stat(r.week.filter(Boolean).length, 'Runs this week')}${stat(r.pace, 'Avg pace', 'min / mi')}${stat(miles.toFixed(1) + '<small> mi</small>', 'This week', `goal ${r.goal} mi`)}${stat(r.month.reduce((x, y) => x + y, 0).toFixed(1), 'Miles, last 4 weeks')}</div>` : ''}
-      <div class="fx-grid three">
-        <section class="tile fx-card ls-main">
-          <div class="fx-h"><h3>Weekly miles</h3>${demo ? demoTag : ''}
-            <div class="td-seg ls-seg">${RUN_RANGES.map(([k, l]) => `<button class="${runView.range === k ? 'on' : ''}" data-runrange="${k}">${l}</button>`).join('')}</div></div>
-          <div class="ls-chartwrap"><span class="ls-unit tip" data-tip="Miles per week">MI</span>${lineChart(pts.map(p => ({ ...p, note: '' })), 'miles', 'mi', 'Weekly miles', weekOf, 520)}<div class="ls-tip" hidden></div></div>
-          ${pts.length ? `<div class="ls-stats run">${[[`${(pts.reduce((x, p) => x + p.miles, 0) / pts.length).toFixed(1)} <small>mi</small>`, 'Avg week'], [`${Math.max(...pts.map(p => p.miles))} <small>mi</small>`, 'Best week'], [`${pts.reduce((x, p) => x + p.miles, 0).toFixed(0)} <small>mi</small>`, 'Total']].map(([v, l]) => `<div class="ls-stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>` : ''}
-        </section>
-        ${demo ? `<div class="fx-col">
-          <section class="tile fx-card"><div class="fx-h"><h3>Weekly goal</h3></div>
-            <div class="fx-calrow"><div class="fx-cal">${ringSvg(pct(miles, r.goal))}<div class="fx-cal-in"><b>${pct(miles, r.goal)}%</b><span>of ${r.goal} mi</span></div></div>
-              <div class="fx-calnums">${thisWeekRuns.map(([when, name, dist]) => `<div><b>${dist}</b><span class="p">${when} · ${name}</span></div>`).join('')}<div><b>${(r.goal - miles).toFixed(1)}</b><span class="p">mi to go</span></div></div></div></section>
-          <section class="tile fx-card fx-fill"><div class="fx-h"><h3>This week</h3></div>${bars(r.week, DOW)}</section>
-        </div>
-        <div class="fx-col">
-          <section class="tile fx-card"><div class="fx-h"><h3>Personal records</h3></div><div class="fx-prs">${r.prs.map(([n, v]) => `<div class="fx-pr"><b>${v}</b><span class="p">${n}</span></div>`).join('')}</div></section>
-          <section class="tile fx-card fx-fill"><div class="fx-h"><h3>Recent runs</h3></div>
-            <div class="fx-list" data-fit>${r.log.map(([when, name, dist, time, pace]) => `<div class="tile fx-meal"><div><div class="it">${name}</div><div class="p">${when} · ${time} · ${pace}/mi</div></div><span class="pj-spacer"></span><div class="fx-kcal"><b>${dist}</b><span class="p">miles</span></div></div>`).join('')}</div></section>
-        </div>`
-        : `<section class="tile fx-card fx-span2">${emptyCard('Nothing logged yet', 'Run logging is coming soon.')}</section>`}
-      </div></div>`;
+    if (!m) {
+      el.innerHTML = `<div class="fx-wrap"><section class="tile fx-card fx-span2">${emptyCard('No runs yet', 'Log your first run and your weekly miles, pace and goal fill in here.')}
+        <div class="pj-row fx-center"><button class="tile pj-btn primary" data-runlog>+ Log run</button></div></section></div>`;
+    } else {
+      const miles = m.week.reduce((x, y) => x + y, 0), pts = m.pts.filter(p => p.at >= Date.now() - days * 864e5);
+      el.innerHTML = `<div class="fx-wrap">
+        <div class="fx-runbar">${m.demo ? demoTag : ''}<span class="pj-spacer"></span><button class="tile pj-btn primary" data-runlog>+ Log run</button></div>
+        <div class="fx-stats">${stat(m.runsThisWeek, 'Runs this week')}${stat(m.pace, 'Avg pace', 'min / mi')}${stat(r1(miles) + '<small> mi</small>', 'This week', `goal ${m.goal} mi`)}${stat(r1(m.month), 'Miles, last 4 weeks')}</div>
+        <div class="fx-grid three">
+          <section class="tile fx-card ls-main">
+            <div class="fx-h"><h3>Weekly miles</h3>
+              <div class="td-seg ls-seg">${RUN_RANGES.map(([k, l]) => `<button class="${runView.range === k ? 'on' : ''}" data-runrange="${k}">${l}</button>`).join('')}</div></div>
+            <div class="ls-chartwrap"><span class="ls-unit tip" data-tip="Miles per week">MI</span>${lineChart(pts.map(p => ({ ...p, note: '' })), 'miles', 'mi', 'Weekly miles', weekOf, 520)}<div class="ls-tip" hidden></div></div>
+            ${pts.length ? `<div class="ls-stats run">${[[`${(pts.reduce((x, p) => x + p.miles, 0) / pts.length).toFixed(1)} <small>mi</small>`, 'Avg week'], [`${Math.max(...pts.map(p => p.miles))} <small>mi</small>`, 'Best week'], [`${pts.reduce((x, p) => x + p.miles, 0).toFixed(0)} <small>mi</small>`, 'In range']].map(([v, l]) => `<div class="ls-stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>` : ''}
+          </section>
+          <div class="fx-col">
+            <section class="tile fx-card"><div class="fx-h"><h3>Weekly goal</h3><span class="pj-spacer"></span>${m.demo ? '' : '<button class="td-toggle" data-rungoal>Edit goal</button>'}</div>
+              <div class="fx-calrow"><div class="fx-cal">${ringSvg(pct(miles, m.goal))}<div class="fx-cal-in"><b>${pct(miles, m.goal)}%</b><span>of ${m.goal} mi</span></div></div>
+                <div class="fx-calnums">${m.thisWeek.map(x => `<div><b>${r1(x.dist)}</b><span class="p">${esc(x.when)} · ${esc(x.name)}</span></div>`).join('')}<div><b>${Math.max(0, m.goal - miles).toFixed(1)}</b><span class="p">mi to go</span></div></div></div></section>
+            <section class="tile fx-card fx-fill"><div class="fx-h"><h3>This week</h3></div>${bars(m.week, DOW)}</section>
+          </div>
+          <div class="fx-col">
+            <section class="tile fx-card"><div class="fx-h"><h3>Personal records</h3></div><div class="fx-prs">${m.prs.map(([n, v]) => `<div class="fx-pr"><b>${v}</b><span class="p">${n}</span></div>`).join('')}</div></section>
+            <section class="tile fx-card fx-fill"><div class="fx-h"><h3>Recent runs</h3></div>
+              <div class="fx-list" data-fit>${m.log.map(x => `<button class="tile fx-meal fx-run" ${x.id ? `data-runedit="${x.id}"` : ''}><div class="fx-runi"><div class="it">${esc(x.name)}</div><div class="p">${esc(x.when)} · ${x.time} · ${x.pace}/mi</div></div><span class="pj-spacer"></span><div class="fx-kcal"><b>${typeof x.dist === 'number' ? r1(x.dist) : x.dist}</b><span class="p">miles</span></div></button>`).join('')}</div></section>
+          </div>
+        </div></div>`;
+    }
     if (!el.dataset.bound) {
       el.dataset.bound = 1;
-      el.addEventListener('click', e => { const b = e.target.closest('[data-runrange]'); if (b) { runView.range = b.dataset.runrange; running(el); } });
+      el.addEventListener('click', e => {
+        const b = e.target.closest('[data-runrange],[data-runlog],[data-runedit],[data-rungoal]'); if (!b) return;
+        if (b.dataset.runrange) { runView.range = b.dataset.runrange; running(el); }
+        else if ('runlog' in b.dataset) runModal();
+        else if (b.dataset.runedit) runModal(b.dataset.runedit);
+        else if ('rungoal' in b.dataset) goalModal();
+      });
     }
+  }
+  Personal.subscribe(() => { if (runRoot && !runRoot.hidden && !document.querySelector('.pj-overlay')) running(runRoot); });
+
+  function overlay(html) {
+    const wrap = document.createElement('div'); wrap.className = 'pj-overlay';
+    wrap.innerHTML = `<div class="pj-modal glass lg-modal">${html}</div>`;
+    document.body.appendChild(wrap); requestAnimationFrame(() => wrap.classList.add('on'));
+    const close = () => { wrap.classList.remove('on'); setTimeout(() => wrap.remove(), 250); };
+    wrap.addEventListener('pointerdown', e => { if (e.target === wrap) close(); });
+    wrap.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    return { wrap, close };
+  }
+  function runModal(id) {
+    const ex = id && RunLog.all.find(x => x.id === id);
+    const { wrap, close } = overlay(`<div class="pj-row"><h3>${ex ? 'Edit run' : 'Log a run'}</h3><span class="pj-spacer"></span><button class="pj-x" data-x>×</button></div>
+      <label class="tm-field col"><span>Date</span><input type="date" class="pj-in" id="rnDate" value="${ymd(new Date(ex ? ex.at : Date.now()))}" max="${ymd(new Date())}"></label>
+      <label class="tm-field col"><span>Distance (miles)</span><input class="pj-in" id="rnMi" type="number" min="0" step="0.01" inputmode="decimal" placeholder="3.10" value="${ex ? ex.miles : ''}"></label>
+      <label class="tm-field col"><span>Time (mm:ss or h:mm:ss)</span><input class="pj-in" id="rnTime" inputmode="numeric" placeholder="27:30" autocomplete="off" value="${ex ? fmtTime(ex.secs) : ''}"></label>
+      <label class="tm-field col"><span>Name (optional)</span><input class="pj-in" id="rnName" placeholder="Evening run" value="${esc(ex?.name || '')}"></label>
+      <div class="p" id="rnPace">&nbsp;</div><div class="pj-err" id="rnErr"></div>
+      <div class="pj-row end">${ex ? '<button class="tile pj-btn danger" data-del>Delete</button>' : ''}<button class="tile pj-btn" data-x>Cancel</button><button class="tile pj-btn primary" data-save>${ex ? 'Save' : 'Log run'}</button></div>`);
+    const q = s => wrap.querySelector(s), pace = () => { const mi = parseFloat(q('#rnMi').value), s = parseTime(q('#rnTime').value); q('#rnPace').innerHTML = mi > 0 && s > 0 ? `Pace: <b>${fmtPace(s, mi)}</b> /mi` : '&nbsp;'; };
+    wrap.addEventListener('input', pace); pace(); q('#rnMi').focus();
+    const save = () => {
+      const miles = parseFloat(q('#rnMi').value), secs = parseTime(q('#rnTime').value), date = q('#rnDate').value;
+      if (!(miles > 0) || !(secs > 0)) { q('#rnErr').textContent = 'Enter a distance and a time.'; return; }
+      if (!date) { q('#rnErr').textContent = 'Pick the date.'; return; }
+      const at = new Date(date + 'T12:00').getTime(), name = q('#rnName').value.trim(), list = RunLog.all.filter(x => x.id !== (ex && ex.id));
+      list.push({ id: ex ? ex.id : crypto.randomUUID(), at, miles: Math.round(miles * 100) / 100, secs, name });
+      RunLog.save(list);
+      if (!ex) Personal.logActivity('Fitness/Running', `Logged a ${miles.toFixed(1)} mi run`);
+      close(); running(runRoot);
+    };
+    wrap.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('input')) save(); });
+    wrap.addEventListener('click', e => {
+      if (e.target.closest('[data-x]')) close();
+      else if (e.target.closest('[data-save]')) save();
+      else if (e.target.closest('[data-del]') && confirm('Delete this run?')) { RunLog.save(RunLog.all.filter(x => x.id !== ex.id)); close(); running(runRoot); }
+    });
+  }
+  function goalModal() {
+    const { wrap, close } = overlay(`<div class="pj-row"><h3>Weekly goal</h3><span class="pj-spacer"></span><button class="pj-x" data-x>×</button></div>
+      <label class="tm-field col"><span>Miles per week</span><input class="pj-in" id="rgMi" type="number" min="1" step="1" inputmode="decimal" value="${RunLog.goal}"></label>
+      <div class="pj-row end"><button class="tile pj-btn" data-x>Cancel</button><button class="tile pj-btn primary" data-save>Save</button></div>`);
+    const save = () => { const v = parseFloat(wrap.querySelector('#rgMi').value); if (v > 0) { Personal.setKv('run.goal', v); close(); running(runRoot); } };
+    wrap.addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
+    wrap.addEventListener('click', e => { if (e.target.closest('[data-x]')) close(); else if (e.target.closest('[data-save]')) save(); });
   }
 
   // Dashboard card: workouts this week + this week's muscle chart
@@ -621,5 +713,6 @@ const FitnessUI = (() => {
   const showStats = () => { go('Fitness/Lifting'); requestAnimationFrame(() => setLiftPage(1)); };
   const onStats = () => liftPage === 1 && !document.documentElement.classList.contains('phone');
   const toMain = () => setLiftPage(0);
-  return { onStats, toMain, showStats, lifting, running, dashCard, radar, lineChart, ringSvg, streakBadge, stat, emptyCard, demoTag, openStats, openLog, exerciseNames, splitNames, loggedExercises: () => allExercises().map(e => e.name) };
+  const openRun = () => { go('Fitness/Running'); setTimeout(() => runModal(), 80); };
+  return { openRun, onStats, toMain, showStats, lifting, running, dashCard, radar, lineChart, ringSvg, streakBadge, stat, emptyCard, demoTag, openStats, openLog, exerciseNames, splitNames, loggedExercises: () => allExercises().map(e => e.name) };
 })();

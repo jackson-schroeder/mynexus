@@ -8,7 +8,7 @@ function applyTabs() {
   if (current && current !== 'Settings' && current !== 'Dashboard' && isHidden(current)) go('Dashboard');
 }
 let current = 'Dashboard';
-const SUBS = { Fitness: ['Lifting', 'Running', 'Diet'], Time: ['Todo', 'Calendar', 'Goals', 'Time'], Projects: [], Finance: [], Settings: [] };
+const SUBS = { Fitness: ['Lifting', 'Running', 'Diet'], Time: ['Todo', 'Calendar', 'Notes', 'Goals', 'Time'], Projects: [], Finance: [], Settings: [] };
 const title = n => `<span class="my">my</span><span class="nm">${n}</span>`;
 
 const LAST_KEY = 'nav.last';
@@ -20,7 +20,7 @@ function resolve(path) {
   const pick = visible.includes(lastSub[tab]) ? lastSub[tab] : visible[0] || SUBS[tab][0];
   return tab + '/' + pick;
 }
-const ORDER = ['Dashboard', 'Fitness/Lifting', 'Fitness/Running', 'Fitness/Diet', 'Time/Todo', 'Time/Calendar', 'Time/Goals', 'Time/Time', 'Projects', 'Finance', 'Settings'];
+const ORDER = ['Dashboard', 'Fitness/Lifting', 'Fitness/Running', 'Fitness/Diet', 'Time/Todo', 'Time/Calendar', 'Time/Notes', 'Time/Goals', 'Time/Time', 'Projects', 'Finance', 'Settings'];
 function slide(from, to) {
   const dir = Math.sign(ORDER.indexOf(to) - ORDER.indexOf(from));
   const el = document.querySelector('.view.on');
@@ -60,7 +60,7 @@ function go(path) {
   document.querySelectorAll('.view').forEach(v => { v.scrollTop = 0; v.scrollLeft = 0; }); // phone pages scroll: start each page at the top
   if (tab === 'Dashboard') return;
   // Pages that are built; everything else shows "Nothing here yet"
-  const MODULES = { Projects: ['projectsRoot', el => Projects.mount(el)], 'Time/Todo': ['todoRoot', el => TimeUI.Todo.mount(el)], 'Time/Calendar': ['calRoot', el => TimeUI.Calendar.mount(el)], Settings: ['settingsRoot', el => Account.mount(el)],
+  const MODULES = { Projects: ['projectsRoot', el => Projects.mount(el)], 'Time/Todo': ['todoRoot', el => TimeUI.Todo.mount(el)], 'Time/Calendar': ['calRoot', el => TimeUI.Calendar.mount(el)], 'Time/Notes': ['notesRoot', el => NotesUI.mount(el)], Settings: ['settingsRoot', el => Account.mount(el)],
     'Fitness/Lifting': ['liftRoot', el => FitnessUI.lifting(el)], 'Fitness/Diet': ['dietRoot', el => DietUI.mount(el)], 'Fitness/Running': ['runRoot', el => FitnessUI.running(el)] };
   const mod = MODULES[sub ? tab + '/' + sub : tab];
   Object.values(MODULES).forEach(([id]) => (document.getElementById(id).hidden = !mod || mod[0] !== id));
