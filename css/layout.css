@@ -140,3 +140,8 @@ body.windowed { padding-top: 68px; }
 .search-none { padding: 14px; color: var(--muted); font-size: 14px; }
 
 #crumb { cursor: pointer; }
+
+/* inside a project: its name (and picture) is the page title */
+#pageTitle.pj-named { display: flex; align-items: center; gap: 14px; cursor: pointer; min-width: 0; }
+#pageTitle.pj-named .pj-pic { width: 46px; height: 46px; border-radius: 12px; }
+.pj-ptitle { overflow-wrap: break-word; min-width: 0; }

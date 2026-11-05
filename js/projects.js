@@ -34,6 +34,7 @@ const Projects = (() => {
     else if (view.name === 'board' && Store.get('projects', view.id)) root.innerHTML = boardView(view.id);
     else { view = { name: 'list' }; root.innerHTML = listView(); }
     root.querySelectorAll('[data-grow]').forEach(grow);
+    syncTitle();
     loadPics();
     window.crumbChanged?.();
     setTimeout(boardScroll);
@@ -76,11 +77,14 @@ const Projects = (() => {
   // Title picture (only drawn when the project has one; stays invisible until it has loaded)
   const picImg = pid => { const r = Store.projectPic(pid); return r ? `<img class="pj-pic" data-pic="${esc(r.id)}" alt="" hidden>` : ''; };
   function loadPics() {
-    root?.querySelectorAll('img[data-pic]').forEach(async img => {
-      const row = Store.get('milestones', img.dataset.pic); if (!row) return;
-      const url = await Store.picUrl(row); if (!url || !img.isConnected) return;
+    const one = async (img, tries) => {
+      const row = Store.get('milestones', img.dataset.pic); if (!row || !img.isConnected) return;
+      let url = null; try { url = await Store.picUrl(row); } catch {}
+      if (!img.isConnected) return;
+      if (!url) { if (tries < 4) setTimeout(() => one(img, tries + 1), 1500); return; } // right after start-up the sign-in may not be ready yet
       img.onload = () => { img.hidden = false; }; img.onerror = () => { img.hidden = true; }; img.src = url;
-    });
+    };
+    document.querySelectorAll('#pageTitle img[data-pic], #projectsRoot img[data-pic]').forEach(img => one(img, 0));
   }
   function projectTile(p) {
     const cs = Store.projectCards(p.id), { pct } = Store.progress(p.id);
@@ -110,7 +114,7 @@ const Projects = (() => {
     const tab = view.tab || 'cards', nUnread = Store.unread(pid).length;
     const tabs = `<div class="td-seg pj-ptabs">${[['cards', 'Cards'], ['timeline', 'Timeline'], ['updates', 'Updates'], ['todo', 'To-do'], ['people', 'People'], ...(Store.can(pid, 'manage_roles') ? [['roles', 'Roles']] : [])].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="ptab" data-tab="${k}">${l}${k === 'updates' && nUnread ? ` <span class="pj-badge">${nUnread}</span>` : ''}</button>`).join('')}</div>`;
     return `${bar(`<button class="tile pj-btn" data-act="back">← All projects</button>${tabs}
-        ${picImg(pid)}${tab === 'cards' ? '<h3 class="pj-ctab">All Project cards</h3>' : `<textarea class="pj-title" rows="1" data-grow data-project-name="${pid}" ${Store.can(pid, 'manage_roles') ? '' : 'readonly'}>${esc(p.name)}</textarea>`}`)}
+        ${tab === 'cards' ? '<h3 class="pj-ctab">All Project cards</h3>' : ''}`)}
       ${tab === 'roles' && Store.can(pid, 'manage_roles') ? rolesView(pid) : tab === 'people' ? peopleView(pid, colors) : tab === 'todo' ? todoView(pid, colors) : tab === 'timeline' && !inTl ? timelineView(pid) : tab === 'updates' ? updatesView(pid) : `${inTl ? `<div class="pj-row"><button class="tile pj-btn" data-act="tlback">← Timeline</button><h3>${esc(phaseName(pid, view.tlPhase))}</h3></div>` : ''}<div class="pj-sb" hidden><i></i></div>${inTl && !shownSteps.length ? '<p class="p pj-hint">No card tables in this phase yet. Add one below, then add cards to it.</p>' : ''}<div class="pj-board" data-board="${pid}">${cols}
         ${canSteps ? `<button class="tile pj-col pj-newstep" data-act="addstep">+ Add table</button>` : ''}</div>`}`;
   }
@@ -622,6 +626,7 @@ const Projects = (() => {
         if (msg && root.querySelector('#pjErr')) root.querySelector('#pjErr').textContent = msg;
       }
     });
+    document.getElementById('pageTitle')?.addEventListener('click', () => { if (typeof current !== 'undefined' && current === 'Projects' && view.name === 'board') editProject(view.id); });
     root.addEventListener('dblclick', e => { const proj = e.target.closest('.pj-proj[data-id]'); if (proj) { clearTimeout(openTimer); editProject(proj.dataset.id); } });
     root.addEventListener('contextmenu', e => {
       const card = e.target.closest('.pj-card[data-id]'), proj = e.target.closest('.pj-proj[data-id]');
@@ -880,8 +885,17 @@ const Projects = (() => {
   function open(pid, cid) { view = { name: 'board', id: pid }; go('Projects'); if (cid) setTimeout(() => cardModal(cid)); }
 
   const leave = () => { commitSeen(); render(); };
+  // Inside a project the big page title is the project's name (with its picture) in the app's purple style; click it to edit the project
+  function syncTitle() {
+    const pt = document.getElementById('pageTitle'); if (!pt || typeof current === 'undefined' || current !== 'Projects') return;
+    const p = view.name === 'board' && Store.get('projects', view.id);
+    pt.classList.toggle('pj-named', !!p);
+    pt.title = p ? 'Edit project' : '';
+    pt.innerHTML = p ? `<span class="nm pj-ptitle">${esc(p.name)}</span>${picImg(p.id)}` : '<span class="my">my</span><span class="nm">Projects</span>';
+    loadPics();
+  }
   const inBoard = () => view.name === 'board' && !!Store.get('projects', view.id);
   const toHub = () => { commitSeen(); view = { name: 'list' }; render(); };
   const stepGroup = (pid, sid) => stepPhase(pid, sid)?.start || '';
-  return { mount, render, open, leave, inBoard, toHub, stepGroup, tag: (uid, pid) => ini(uid, userColors(pid)), color: (uid, pid) => userColors(pid)[uid] };
+  return { mount, render, open, leave, inBoard, toHub, stepGroup, syncTitle, tag: (uid, pid) => ini(uid, userColors(pid)), color: (uid, pid) => userColors(pid)[uid] };
 })();

@@ -68,6 +68,7 @@ function go(path) {
   if (mod) mod[1](document.getElementById(mod[0]));
   const pt = document.getElementById('pageTitle');
   pt.innerHTML = title(sub || tab);
+  if (tab === 'Projects' && typeof Projects !== 'undefined') Projects.syncTitle(); // inside a project the title is its name
   pt.dataset.go = tab; // clicking a page's title goes back to that tab (its last sub-tab)
   document.getElementById('subtabs').innerHTML = SUBS[tab].map(s =>
     `<button class="tile${s === sub ? ' on' : ''}" data-go="${tab}/${s}" ${isHidden(tab + '/' + s) ? 'hidden' : ''}>${title(s)}</button>`).join('');

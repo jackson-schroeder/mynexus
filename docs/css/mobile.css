@@ -234,3 +234,6 @@ html.phone .nt-back { display: inline-flex; }
 html.phone .nt-when { display: none; }
 html.phone .nt-title { font-size: 24px; }
 html.phone .nt-bar .pj-btn { padding-left: 12px; padding-right: 12px; }
+
+html.phone #pageTitle.pj-named .pj-pic { width: 36px; height: 36px; border-radius: 10px; }
+html.phone .page-head h1 { min-width: 0; max-width: 100%; }
