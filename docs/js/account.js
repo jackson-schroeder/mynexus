@@ -27,7 +27,7 @@ const Account = (() => {
         <div class="ac-hero"><div class="ac-orb"></div><div><h2><span class="my">my</span><span class="nm">Account</span></h2>
           <p class="p">Sign in once and everything — projects, tasks, calendar and recents — is saved to your account and follows you to your phone.</p></div></div>
         <div class="td-seg ac-tabs"><button class="${mode === 'in' ? 'on' : ''}" data-mode="in">Sign in</button><button class="${mode === 'up' ? 'on' : ''}" data-mode="up">Create account</button></div>
-        ${mode === 'up' ? `<input class="pj-in" id="acUser" placeholder="Username (letters, numbers, _)">` : ''}
+        ${mode === 'up' ? `<input class="pj-in" id="acUser" data-at value="@" title="Username: 3-20 letters, numbers or _" autocapitalize="none">` : ''}
         <input class="pj-in" id="acEmailIn" type="email" placeholder="Email">
         <div class="pw-wrap"><input class="pj-in" id="acPass" type="password" placeholder="Password (6+ characters)"><button type="button" class="pw-eye" data-eye aria-label="Show password"></button></div>
         ${mode === 'up' ? `<div class="pw-wrap"><input class="pj-in" id="acPass2" type="password" placeholder="Type your password again"><button type="button" class="pw-eye" data-eye aria-label="Show password"></button></div>` : ''}

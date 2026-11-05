@@ -145,7 +145,7 @@ html.phone .pj-me, html.phone .pj-status { flex-shrink: 0; }
 /* nothing may be cut off: cards grow to fit their content, text wraps */
 html.phone .fx-card { overflow: visible; min-height: auto; flex-shrink: 0; height: auto; }
 html.phone .hero > *, html.phone .lower > *, html.phone .summary > * { min-width: 0; }
-html.phone .tm-ttitle, html.phone .tm-tnotes { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+html.phone .tm-ttitle, html.phone .tm-tnotes { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; }
 html.phone .tm-task { align-items: flex-start; }
 html.phone .tm-tmeta { flex-wrap: wrap; justify-content: flex-end; max-width: 45%; }
 html.phone .tm-task .tm-check { margin-top: 2px; }
@@ -164,11 +164,11 @@ html.phone .lg-set { grid-template-columns: 16px minmax(0, 1fr) auto minmax(0, 1
 html.phone .pj-modal input, html.phone .pj-modal select, html.phone .pj-modal textarea { max-width: 100%; }
 html.phone .pj-perms { grid-template-columns: 1fr; }
 html.phone .fx-prs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-html.phone .fx-pr { min-width: 0; padding: 12px; overflow-wrap: anywhere; }
+html.phone .fx-pr { min-width: 0; padding: 12px; overflow-wrap: break-word; }
 html.phone .pj-modal { overflow-x: hidden; }
 html.phone .set-wrap { overflow: visible; }
 html.phone .set-subs { grid-template-columns: minmax(0, 1fr); }
-html.phone .p, html.phone .it { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+html.phone .p, html.phone .it { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; }
 html.phone .fx-split.lift .fx-prs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 html.phone .fx-split.lift .fx-pr .p { white-space: normal; overflow: visible; text-overflow: clip; }
 
@@ -178,7 +178,7 @@ html.phone.searching .brand { margin-right: 0; }
 html.phone .search-pop { max-height: 70vh; }
 html.phone .search-kind { display: none; }
 html.phone .search-row { grid-template-columns: 1fr; gap: 2px; padding: 10px 12px; }
-html.phone .search-title { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; font-size: 16px; }
+html.phone .search-title { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: break-word; font-size: 16px; }
 html.phone .search-sub { white-space: normal; }
 
 /* project tabs (5 of them) swipe sideways inside their own row; day panel buttons wrap */
@@ -194,3 +194,29 @@ html.phone .pj-menu { max-width: calc(100vw - 16px); }
 html.phone .tl-setup { flex-wrap: wrap; justify-content: flex-start; }
 html.phone .tl-setup label, html.phone .tl-bar label { flex: 1 1 100%; justify-content: space-between; }
 html.phone .tl-setup .pj-in[type="date"], html.phone .tl-bar .pj-in[type="date"] { flex: 1; max-width: 200px; }
+
+/* ===== Phone performance: no live blur, no endless animations ===== */
+html.phone .glass, html.phone .panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
+html.phone .panel { background: rgba(28,17,42,.5); }
+html.phone .pj-modal, html.phone .pj-modal.glass { background: rgba(36,22,54,.98); }
+html.phone .tour-card { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(36,22,54,.98); }
+html.phone *, html.phone *::before, html.phone *::after { animation-iteration-count: 1 !important; }
+html.phone .tile::before, html.phone .search::before { display: none; }
+
+/* ===== Readability and touch ===== */
+html.phone input, html.phone select, html.phone textarea { font-size: 16px; }
+html.phone .p { font-size: 13px; }
+html.phone .pj-btn, html.phone .td-seg button, html.phone .subtabs button { min-height: 40px; }
+html.phone .pj-x { min-width: 36px; min-height: 36px; display: inline-grid; place-items: center; }
+html.phone .tm-check { min-width: 24px; }
+html.phone h1, html.phone h2, html.phone h3, html.phone .it, html.phone .p { overflow-wrap: break-word; word-break: normal; }
+
+/* long text never runs sideways: rows shrink and wrap */
+html.phone .row, html.phone .ev, html.phone .tile.row { min-width: 0; }
+html.phone .row > div, html.phone .ev > div { min-width: 0; flex: 1 1 0; }
+html.phone .row .r { flex-shrink: 0; white-space: nowrap; }
+html.phone .updates, html.phone .dash-agenda, html.phone #dashTodo, html.phone #dashProjects, html.phone #dashFitness { min-width: 0; }
+html.phone .card, html.phone .section { min-width: 0; overflow-wrap: break-word; }
+html.phone .cal-block { overflow: visible; min-height: 34px; }
+html.phone .cal-block b { white-space: normal; overflow: visible; text-overflow: clip; }
+html.phone .pj-roles { margin: 0; padding: 0; overflow: visible; flex: none; }

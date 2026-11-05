@@ -14,7 +14,7 @@ const Gate = (() => {
       <h2><span class="my">my</span><span class="nm">Nexus</span></h2>
       <p class="p">Sign in to open your app. You'll stay signed in until you've been away for 30 days.</p>
       <div class="pj-tabs"><button class="tile pj-btn${up ? '' : ' on'}" data-gate-mode="in">Sign in</button><button class="tile pj-btn${up ? ' on' : ''}" data-gate-mode="up">Create account</button></div>
-      ${up ? '<input class="pj-in" id="gUser" placeholder="Username (letters, numbers, _)" autocomplete="username">' : ''}
+      ${up ? '<input class="pj-in" id="gUser" data-at value="@" title="Username: 3-20 letters, numbers or _" autocomplete="username" autocapitalize="none">' : ''}
       <input class="pj-in" id="gEmail" type="email" placeholder="Email" autocomplete="email">
       <div class="pw-wrap"><input class="pj-in" id="gPass" type="password" placeholder="Password (6+ characters)" autocomplete="${up ? 'new-password' : 'current-password'}">${eye}</div>
       ${up ? `<div class="pw-wrap"><input class="pj-in" id="gPass2" type="password" placeholder="Type your password again" autocomplete="new-password">${eye}</div>` : ''}

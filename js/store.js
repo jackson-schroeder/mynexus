@@ -158,6 +158,7 @@ const Store = (() => {
 
   // ---------- Accounts ----------
   async function signUp(email, password, username) {
+    username = String(username || '').replace(/^@/, '').trim();
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) return 'Username must be 3-20 letters, numbers or _';
     const { data, error } = await sb.auth.signUp({ email, password, options: { data: { username }, emailRedirectTo: WEB } });
     if (error) return /database error/i.test(error.message) ? 'That username is taken' : error.message;

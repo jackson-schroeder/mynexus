@@ -25,14 +25,25 @@ setPhone(); phoneMQ.addEventListener('change', () => { setPhone(); queueFit(); }
 // New elements are sized automatically as they appear.
 const LIFT = '.tile, .search';
 function sizeLifts() {
+  if (isPhone()) return; // no hover lifts on a touchscreen
   const px = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--lift-px')) || 12;
   document.querySelectorAll(LIFT).forEach(el => { if (el.offsetWidth) el.style.setProperty('--s', 1 + 2 * px / el.offsetWidth); });
 }
 let liftQueued = false;
-const queueLifts = () => { if (!liftQueued) { liftQueued = true; requestAnimationFrame(() => { liftQueued = false; sizeLifts(); }); } };
+const queueLifts = () => { if (!liftQueued && !isPhone()) { liftQueued = true; requestAnimationFrame(() => { liftQueued = false; sizeLifts(); }); } };
 new MutationObserver(queueLifts).observe(document.body, { childList: true, subtree: true });
 addEventListener('resize', queueLifts);
 queueLifts();
+
+// Username boxes (data-at): always start with a mandatory @ that can't be removed (no spaces, one @)
+const atFix = el => { const v = '@' + el.value.replace(/[@\s]/g, ''); if (el.value !== v) el.value = v; };
+document.addEventListener('input', e => { if (e.target.matches?.('input[data-at]')) atFix(e.target); }, true);
+document.addEventListener('focusin', e => { const t = e.target; if (t.matches?.('input[data-at]')) { atFix(t); requestAnimationFrame(() => { if (t.value === '@') t.setSelectionRange(1, 1); }); } });
+document.addEventListener('keydown', e => {
+  const t = e.target;
+  if (!t.matches?.('input[data-at]')) return;
+  if ((e.key === 'Backspace' && t.selectionStart <= 1 && t.selectionEnd <= 1) || (e.key === 'Delete' && t.selectionStart === 0 && t.selectionEnd === 0) || (e.key === 'Home')) { e.preventDefault(); t.setSelectionRange(1, 1); }
+}, true);
 
 // Password fields: the eye button shows/hides what you typed
 document.addEventListener('click', e => {
@@ -64,7 +75,7 @@ function fitLists() {
   });
 }
 let fitQueued = false;
-const queueFit = () => { if (!fitQueued) { fitQueued = true; requestAnimationFrame(() => { fitQueued = false; fitLists(); }); } };
+const queueFit = () => { if (!fitQueued && !isPhone()) { fitQueued = true; requestAnimationFrame(() => { fitQueued = false; fitLists(); }); } };
 // (ignores the row show/hide that fitLists itself does, so it can't loop)
 new MutationObserver(m => { if (m.some(x => x.type === 'childList' || !x.target.parentElement?.hasAttribute('data-fit'))) queueFit(); }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
 addEventListener('resize', queueFit);

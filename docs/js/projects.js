@@ -24,6 +24,7 @@ const Projects = (() => {
   });
 
   // ---------- Views ----------
+  const grow = el => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
   function render() {
     if (!root) return;
     pendingRender = false;
@@ -31,6 +32,7 @@ const Projects = (() => {
     if (Store.cloud && !me) root.innerHTML = authView();
     else if (view.name === 'board' && Store.get('projects', view.id)) root.innerHTML = boardView(view.id);
     else { view = { name: 'list' }; root.innerHTML = listView(); }
+    root.querySelectorAll('[data-grow]').forEach(grow);
     setTimeout(boardScroll);
     if (view.tab === 'updates') setTimeout(watchSeen); // start noticing which unread updates you actually look at
   }
@@ -48,7 +50,7 @@ const Projects = (() => {
       <h2>${title('Projects')}</h2><p class="p">Sign in to share projects with your friends.</p>
       ${Store.ready ? '' : `<p class="pj-err">The cloud database isn't set up yet. Run supabase/schema.sql in the Supabase SQL Editor, then reopen the app.</p>`}
       <div class="pj-tabs"><button class="tile pj-btn on" data-act="authmode" data-mode="in">Sign in</button><button class="tile pj-btn" data-act="authmode" data-mode="up">Create account</button></div>
-      <input class="pj-in" id="pjUser" placeholder="Username (letters, numbers, _)" hidden>
+      <input class="pj-in" id="pjUser" data-at value="@" title="Username: 3-20 letters, numbers or _" autocapitalize="none" hidden>
       <input class="pj-in" id="pjEmail" type="email" placeholder="Email">
       <div class="pw-wrap"><input class="pj-in" id="pjPass" type="password" placeholder="Password (6+ characters)"><button type="button" class="pw-eye" data-eye aria-label="Show password"></button></div>
       <div class="pw-wrap" id="pjPass2Wrap" hidden><input class="pj-in" id="pjPass2" type="password" placeholder="Type your password again"><button type="button" class="pw-eye" data-eye aria-label="Show password"></button></div>
@@ -85,7 +87,7 @@ const Projects = (() => {
       const cs = Store.cards(s.id).filter(c => !phaseSet || phaseSet.has(c.id));
       return `<div class="pj-col tile" data-step="${s.id}">
         <div class="pj-colhead" ${canSteps ? 'draggable="true"' : ''} data-dragstep="${s.id}">
-          <input class="pj-stepname" data-step-name="${s.id}" value="${esc(s.name)}" ${canSteps ? '' : 'readonly'}>
+          <textarea class="pj-stepname" rows="1" data-grow data-step-name="${s.id}" ${canSteps ? '' : 'readonly'}>${esc(s.name)}</textarea>
           <span class="chip">${cs.length}</span>
           ${canSteps ? `<button class="pj-x" data-act="delstep" data-id="${s.id}" title="Delete step">×</button>` : ''}
         </div>
@@ -96,7 +98,7 @@ const Projects = (() => {
     const tab = view.tab || 'cards', nUnread = Store.unread(pid).length;
     const tabs = `<div class="td-seg pj-ptabs">${[['cards', 'Cards'], ['timeline', 'Timeline'], ['updates', 'Updates'], ['todo', 'To-do'], ['people', 'People'], ...(Store.can(pid, 'manage_roles') ? [['roles', 'Roles']] : [])].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="ptab" data-tab="${k}">${l}${k === 'updates' && nUnread ? ` <span class="pj-badge">${nUnread}</span>` : ''}</button>`).join('')}</div>`;
     return `${bar(`<button class="tile pj-btn" data-act="back">← All projects</button>${tabs}
-        ${tab === 'cards' ? '<h3 class="pj-ctab">All Project cards</h3>' : `<input class="pj-title" data-project-name="${pid}" value="${esc(p.name)}" ${Store.can(pid, 'manage_roles') ? '' : 'readonly'}>`}`)}
+        ${tab === 'cards' ? '<h3 class="pj-ctab">All Project cards</h3>' : `<textarea class="pj-title" rows="1" data-grow data-project-name="${pid}" ${Store.can(pid, 'manage_roles') ? '' : 'readonly'}>${esc(p.name)}</textarea>`}`)}
       ${tab === 'roles' && Store.can(pid, 'manage_roles') ? rolesView(pid) : tab === 'people' ? peopleView(pid, colors) : tab === 'todo' ? todoView(pid, colors) : tab === 'timeline' && !inTl ? timelineView(pid) : tab === 'updates' ? updatesView(pid) : `${inTl ? `<div class="pj-row"><button class="tile pj-btn" data-act="tlback">← Timeline</button><h3>${esc(phaseName(pid, view.tlPhase))}</h3></div>` : ''}<div class="pj-sb" hidden><i></i></div><div class="pj-board" data-board="${pid}">${cols}
         ${canSteps ? `<button class="tile pj-col pj-newstep" data-act="addstep">+ Add step</button>` : ''}</div>`}`;
   }
@@ -198,14 +200,14 @@ const Projects = (() => {
       ${feed.length ? `<div class="tm-gh">New · ${unread.length}</div>${feed.map(u => item(u, sentNow.has(u.id) ? 'past' : 'unread')).join('')}` : '<div class="p up-none">You\'re all caught up.</div>'}
       <button class="tile pj-btn up-past" data-act="pastupd">${showPast ? 'Hide past updates' : `View past updates (${past.length})`}</button>
       ${showPast ? past.map(u => item(u, 'past')).join('') : ''}</div>
-      <div class="tile up-compose"><textarea class="pj-in" id="upMsg" rows="1" placeholder="Write an update to the group…"></textarea><button class="tile pj-btn primary" data-act="sendupd">Send</button></div></div>`;
+      <div class="tile up-compose"><textarea class="pj-in" id="upMsg" data-grow rows="1" placeholder="Write an update to the group…"></textarea><button class="tile pj-btn primary" data-act="sendupd">Send</button></div></div>`;
   }
   function sendUpdate() {
     const box = root.querySelector('#upMsg'), text = box?.value.trim();
     if (!text) return;
     const row = Store.note(view.id, MSG + text);
     if (row) sentNow.add(row.id);
-    box.value = '';
+    box.value = ''; grow(box);
   }
   function watchSeen() {
     seenObserver?.disconnect();
@@ -330,7 +332,7 @@ const Projects = (() => {
 
   function cardTile(c, canMove, colors = {}, showStep = false) {
     const nc = Store.comments(c.id).length, na = Store.attachments(c.id).length, lead = c.assignees.find(u => colors[u]);
-    return `<div class="tile pj-card${lead ? ' tinted' : ''}${showStep && typeof CardLink !== 'undefined' && CardLink.cardDone(c) ? ' done' : ''}" ${lead ? `style="--pc:${colors[lead]}"` : ''} data-act="card" data-id="${c.id}" ${canMove ? 'draggable="true"' : ''}>
+    return `<div class="tile pj-card${lead ? ' tinted' : ''}${showStep && typeof CardLink !== 'undefined' && CardLink.cardDone(c) ? ' done' : ''}" ${lead ? `style="--pc:${colors[lead]}"` : ''} data-act="card" data-id="${c.id}" ${canMove ? 'data-movable="1"' : ''}>
       <div class="pj-ctitle">${showStep && typeof CardLink !== 'undefined' ? `<button class="tm-check sm${CardLink.cardDone(c) ? ' on' : ''}" data-act="cardcheck" data-id="${c.id}" aria-label="Mark done">${CHECK}</button>` : ''}<span class="pj-ct">${esc(c.title)}</span><span class="pj-inis">${c.assignees.map(u => ini(u, colors)).join('')}</span></div>
       ${c.description ? `<div class="p pj-snip">${esc(c.description.slice(0, 120))}</div>` : ''}
       ${na || nc || showStep ? `<div class="pj-meta">${showStep ? `<span class="p">${esc(Store.get('steps', c.step_id)?.name || '')}</span>` : ''}<span class="pj-spacer"></span>${na ? `<span class="p">📎 ${na}</span>` : ''}${nc ? `<span class="p">💬 ${nc}</span>` : ''}</div>` : ''}</div>`;
@@ -343,6 +345,8 @@ const Projects = (() => {
     el.className = 'pj-overlay';
     el.innerHTML = `<div class="pj-modal glass">${html}</div>`;
     document.body.appendChild(el);
+    el.querySelectorAll('[data-grow]').forEach(grow);
+    el.addEventListener('input', e => { if (e.target.matches?.('[data-grow]')) grow(e.target); });
     requestAnimationFrame(() => el.classList.add('on'));
     el.addEventListener('pointerdown', e => { if (e.target === el) closeModal(); });
     modal = { el, refresh, onClose };
@@ -373,10 +377,10 @@ const Projects = (() => {
     const canEdit = Store.can(pid, 'edit_cards'), ro = canEdit ? '' : 'readonly';
     const el = openModal(`
       <div class="pj-row">
-        <input class="pj-in pj-ctitlein" id="cTitle" value="${esc(c.title)}" ${ro}><button class="pj-x" data-act="close">×</button></div>
+        <textarea class="pj-in pj-ctitlein" id="cTitle" rows="1" data-grow ${ro}>${esc(c.title)}</textarea><button class="pj-x" data-act="close">×</button></div>
       <div class="pj-row"><div class="p" id="cStep"></div>${Store.can(pid, 'move_cards') ? '<select class="pj-in" id="cMove" style="width:auto" aria-label="Move to step"></select>' : ''}${canEdit && tlData(pid).range ? '<span class="pj-spacer"></span><select class="pj-in" id="cPhase" style="width:auto"></select>' : ''}</div>
       <h4>People</h4><div class="pj-row wrap" id="cPeople"></div>
-      ${canEdit ? `<input class="pj-in" id="cAssign" placeholder="@username to assign" list="cMembers"><datalist id="cMembers">${Store.members(pid).map(m => `<option value="@${esc(Store.username(m.user_id))}">`).join('')}</datalist>` : ''}
+      ${canEdit ? `<input class="pj-in" id="cAssign" data-at value="@" aria-label="Assign a person" list="cMembers" autocapitalize="none"><datalist id="cMembers">${Store.members(pid).map(m => `<option value="@${esc(Store.username(m.user_id))}">`).join('')}</datalist>` : ''}
       <h4>Description</h4><textarea class="pj-in pj-desc" id="cDesc" placeholder="Add as much detail as you want…" ${ro}>${esc(c.description)}</textarea>
       <h4>Files</h4><div id="cFiles"></div>
       ${Store.can(pid, 'attach_files') ? `<label class="tile pj-btn pj-file">+ Attach file<input type="file" id="cFile" multiple hidden></label><div class="pj-err" id="cFileErr"></div>` : ''}
@@ -401,16 +405,17 @@ const Projects = (() => {
     if (canEdit) {
       el.querySelector('#cMove')?.addEventListener('change', e => { const to = e.target.value, c2 = Store.get('cards', id); if (to === c2.step_id) return; Store.moveCard(id, to, Store.cards(to).length); Store.note(pid, `moved “${c2.title}” to ${Store.get('steps', to).name}`); });
       el.querySelector('#cPhase')?.addEventListener('change', e => tlAssign(id, e.target.value));
+      el.querySelector('#cTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
       el.querySelector('#cTitle').addEventListener('change', e => e.target.value.trim() && Store.update('cards', id, { title: e.target.value.trim() }));
       desc.addEventListener('change', () => Store.update('cards', id, { description: desc.value }));
       el.querySelector('#cAssign').addEventListener('keydown', e => {
         if (e.key !== 'Enter') return;
         const name = e.target.value.replace(/^@/, '').trim();
         const m = Store.members(pid).find(x => Store.username(x.user_id).toLowerCase() === name.toLowerCase());
-        if (!m) { e.target.value = ''; e.target.placeholder = `@${name} isn't in this project`; return; }
+        if (!m) { e.target.value = '@'; e.target.title = `@${name} isn't in this project`; return; }
         const cur = Store.get('cards', id);
         if (!cur.assignees.includes(m.user_id)) Store.update('cards', id, { assignees: [...cur.assignees, m.user_id] });
-        e.target.value = '';
+        e.target.value = '@';
       });
     }
     el.querySelector('#cFile')?.addEventListener('change', async e => {
@@ -440,7 +445,7 @@ const Projects = (() => {
     const roleOpts = sel => Store.roles(pid).map(r => `<option value="${r.id}" ${r.id === sel ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
     const el = openModal(`<div class="pj-row"><h3>People</h3><span class="pj-spacer"></span><button class="pj-x" data-act="close">×</button></div>
       <div id="pMembers"></div><div id="pInvites"></div>
-      ${canInvite ? `<h4>Invite</h4>${Store.cloud ? `<div class="pj-row"><input class="pj-in" id="pName" placeholder="@username"><select class="pj-in pj-sel" id="pRole">${roleOpts(Store.roles(pid)[1]?.id)}</select><button class="tile pj-btn primary" id="pInvite">Invite</button></div><div class="pj-err" id="pErr"></div>` : `<p class="p">Inviting friends needs the cloud connected (Supabase). Projects are on this computer only for now.</p>`}` : ''}`,
+      ${canInvite ? `<h4>Invite</h4>${Store.cloud ? `<div class="pj-row"><input class="pj-in" id="pName" data-at value="@" aria-label="Person to invite" autocapitalize="none"><select class="pj-in pj-sel" id="pRole">${roleOpts(Store.roles(pid)[1]?.id)}</select><button class="tile pj-btn primary" id="pInvite">Invite</button></div><div class="pj-err" id="pErr"></div>` : `<p class="p">Inviting friends needs the cloud connected (Supabase). Projects are on this computer only for now.</p>`}` : ''}`,
       () => {
         const p = Store.get('projects', pid);
         el.querySelector('#pMembers').innerHTML = Store.members(pid).map(m => `<div class="row tile"><span class="pj-av">${initials(Store.username(m.user_id))}</span><div class="it">@${esc(Store.username(m.user_id))}${m.user_id === p.owner ? ' <span class="chip">Owner</span>' : ''}</div>
@@ -460,7 +465,7 @@ const Projects = (() => {
       if (!u) return (err.textContent = `No account named @${name}. They need to create one in myProjects first.`);
       if (Store.members(pid).some(m => m.user_id === u.id)) return (err.textContent = `@${u.username} is already in this project.`);
       Store.invite(pid, u.username, el.querySelector('#pRole').value);
-      el.querySelector('#pName').value = ''; err.textContent = `Invited @${u.username}. They'll see it next time they open myProjects.`;
+      el.querySelector('#pName').value = '@'; err.textContent = `Invited @${u.username}. They'll see it next time they open myProjects.`;
     });
   }
 
@@ -569,7 +574,8 @@ const Projects = (() => {
       if (t.dataset.roleName && t.value.trim()) Store.update('roles', t.dataset.roleName, { name: t.value.trim() });
       if (t.dataset.projectName && t.value.trim()) Store.update('projects', t.dataset.projectName, { name: t.value.trim() });
     });
-    root.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.pj-stepname, .pj-title, .tl-pname')) e.target.blur(); });
+    root.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.pj-stepname, .pj-title, .tl-pname')) { e.preventDefault(); e.target.blur(); } });
+    root.addEventListener('input', e => { if (e.target.matches?.('[data-grow]')) grow(e.target); });
     root.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'upMsg') { e.preventDefault(); sendUpdate(); } }); // Enter sends, Shift+Enter = new line
     root.addEventListener('focusout', () => setTimeout(() => { if (pendingRender && !root.contains(document.activeElement)) render(); }));
 
@@ -588,7 +594,130 @@ const Projects = (() => {
     });
     document.addEventListener('pointerup', () => { if (!wsel) return; const { a, b } = wsel; wsel = null; if (a !== b) tlGroup(a, b); else { const w = tlData(view.id).weeks[a]; if (w && !tlData(view.id).parts.some(p => p.start <= w.start && p.end >= w.start)) tlGroup(a, a); else paintSel(); } });
 
-    // Drag cards between steps, and drag step headers to reorder steps
+    // ---- Smooth card dragging (mouse and touch): the card lifts, follows your finger, the others slide aside, and it settles into place ----
+    let pd = null, ghost = null, suppressClick = false;
+    const clearOver = () => root.querySelectorAll('.pj-col.over').forEach(c => c.classList.remove('over'));
+    const cardsIn = list => [...list.querySelectorAll(':scope > .pj-card')];
+    function flip(lists, mutate) { // animate siblings sliding to their new spots
+      const items = lists.flatMap(cardsIn).filter(c => c !== pd?.el), before = new Map(items.map(c => [c, c.getBoundingClientRect().top]));
+      mutate();
+      cardsIn(pd.slot.list).concat(pd.from.list === pd.slot.list ? [] : cardsIn(pd.from.list)).filter(c => c !== pd.el).forEach(c => {
+        const was = before.get(c); if (was === undefined) return;
+        const dy = was - c.getBoundingClientRect().top; if (!dy) return;
+        c.style.transition = 'none'; c.style.transform = `translateY(${dy}px)`;
+        requestAnimationFrame(() => { c.style.transition = 'transform .16s cubic-bezier(.2,.8,.2,1)'; c.style.transform = ''; setTimeout(() => { c.style.transition = ''; }, 200); });
+      });
+    }
+    function startDrag() {
+      if (!pd || pd.active) return;
+      clearTimeout(pd.timer);
+      const r = pd.el.getBoundingClientRect();
+      pd.off = { x: pd.x - r.left, y: pd.y - r.top };
+      pd.from = pd.slot = { list: pd.el.parentElement, next: pd.el.nextElementSibling };
+      ghost = pd.el.cloneNode(true); ghost.classList.add('pj-ghost'); ghost.classList.remove('holding'); ghost.removeAttribute('data-act'); ghost.removeAttribute('data-id'); ghost.style.width = r.width + 'px';
+      document.body.appendChild(ghost);
+      pd.el.classList.remove('holding'); pd.el.classList.add('ph'); document.body.classList.add('pj-dragging');
+      dragging = true; pd.active = true; closeMenu();
+      navigator.vibrate?.(10);
+      pd.raf = requestAnimationFrame(tick);
+    }
+    function autoScroll(x, y) {
+      const board = root.querySelector('.pj-board'), br = board?.getBoundingClientRect();
+      if (br && y > br.top - 40 && y < br.bottom + 40) {
+        if (x < br.left + 56) board.scrollLeft -= Math.min(18, (br.left + 56 - x) / 3);
+        else if (x > br.right - 56) board.scrollLeft += Math.min(18, (x - (br.right - 56)) / 3);
+      }
+      const list = pd.slot?.list;
+      if (list && list.scrollHeight > list.clientHeight + 2) {
+        const lr = list.getBoundingClientRect();
+        if (y < lr.top + 44) list.scrollTop -= Math.min(14, (lr.top + 44 - y) / 3); else if (y > lr.bottom - 44) list.scrollTop += Math.min(14, (y - (lr.bottom - 44)) / 3);
+      }
+      const view = document.querySelector('.view.on'), vr = view?.getBoundingClientRect();
+      if (vr && view.scrollHeight > view.clientHeight + 2) {
+        if (y < vr.top + 60) view.scrollTop -= Math.min(16, (vr.top + 60 - y) / 3); else if (y > vr.bottom - 60) view.scrollTop += Math.min(16, (y - (vr.bottom - 60)) / 3);
+      }
+    }
+    function tick() {
+      if (!pd?.active) return;
+      const { x, y } = pd;
+      ghost.style.transform = `translate3d(${x - pd.off.x}px, ${y - pd.off.y}px, 0) rotate(1.6deg) scale(1.03)`;
+      autoScroll(x, y);
+      const under = document.elementFromPoint(x, y), person = under?.closest('[data-person]');
+      if (person) { clearOver(); person.classList.add('over'); pd.person = person.dataset.person; }
+      else {
+        clearOver(); pd.person = null;
+        const list = under?.closest('[data-drop]') || under?.closest('.pj-col[data-step]')?.querySelector('[data-drop]');
+        if (list) {
+          const next = cardsIn(list).filter(c => c !== pd.el).find(c => y < c.getBoundingClientRect().top + c.offsetHeight / 2) || null;
+          if (list !== pd.slot.list || next !== pd.slot.next) flip([list, pd.slot.list], () => { list.insertBefore(pd.el, next); pd.slot = { list, next }; });
+        }
+      }
+      pd.raf = requestAnimationFrame(tick);
+    }
+    function endDrag(commit) {
+      if (!pd) return;
+      const s = pd; pd = null; clearTimeout(s.timer); cancelAnimationFrame(s.raf);
+      s.el.classList.remove('holding');
+      if (!s.active) return;
+      suppressClick = true; setTimeout(() => { suppressClick = false; }, 60);
+      clearOver();
+      const finish = () => { ghost?.remove(); ghost = null; s.el.classList.remove('ph'); document.body.classList.remove('pj-dragging'); dragging = false; render(); };
+      const card = Store.get('cards', s.id);
+      if (commit && s.person !== null && s.person !== undefined && card) { // dropped on a person: give it to them
+        ghost.style.transition = 'transform .16s ease, opacity .16s ease'; ghost.style.opacity = '0';
+        const assign = s.person === 'none' ? [] : [s.person];
+        if (JSON.stringify(card.assignees) !== JSON.stringify(assign)) {
+          Store.update('cards', s.id, { assignees: assign });
+          Store.note(card.project_id, s.person === 'none' ? `unassigned “${card.title}”` : `assigned “${card.title}” to @${Store.username(s.person)}`);
+        }
+        setTimeout(finish, 170); return;
+      }
+      if (commit && card) {
+        const list = s.el.parentElement, stepId = list?.dataset.drop;
+        if (stepId) {
+          const prev = [...cardsIn(list)].filter(c => c !== s.el), at = prev.indexOf(s.el.previousElementSibling), others = Store.cards(stepId).filter(c => c.id !== s.id);
+          const before = s.el.previousElementSibling?.classList.contains('pj-card') ? others.findIndex(c => c.id === s.el.previousElementSibling.dataset.id) + 1 : 0;
+          const r = s.el.getBoundingClientRect();
+          ghost.style.transition = 'transform .17s cubic-bezier(.2,.8,.2,1)'; ghost.style.transform = `translate3d(${r.left}px, ${r.top}px, 0)`;
+          setTimeout(() => {
+            if (card.step_id !== stepId) Store.note(card.project_id, `moved “${card.title}” to ${Store.get('steps', stepId)?.name}`);
+            Store.moveCard(s.id, stepId, Math.max(0, before));
+            log(`Moved “${card.title}” to ${Store.get('steps', stepId)?.name}`);
+            finish();
+          }, 175);
+          return;
+        }
+      }
+      // cancelled: put it back
+      s.from.list.insertBefore(s.el, s.from.next && s.from.next.parentElement === s.from.list ? s.from.next : null);
+      const r = s.el.getBoundingClientRect();
+      ghost.style.transition = 'transform .17s cubic-bezier(.2,.8,.2,1)'; ghost.style.transform = `translate3d(${r.left}px, ${r.top}px, 0)`;
+      setTimeout(finish, 175);
+    }
+    root.addEventListener('pointerdown', e => {
+      const el = e.target.closest('.pj-card[data-movable]');
+      if (!el || e.button !== 0 || e.target.closest('button, input, textarea, select, a') || pd) return;
+      const touch = e.pointerType !== 'mouse';
+      pd = { id: el.dataset.id, el, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: Date.now(), touch, active: false, person: null };
+      if (touch) pd.timer = setTimeout(() => pd && !pd.active && el.classList.add('holding'), 170); // lifts a little to show it's ready
+    });
+    document.addEventListener('pointermove', e => {
+      if (!pd) return;
+      pd.x = e.clientX; pd.y = e.clientY;
+      if (pd.active) return;
+      const moved = Math.hypot(pd.x - pd.x0, pd.y - pd.y0);
+      if (!pd.touch) { if (moved > 5) startDrag(); }
+      else if (Date.now() - pd.t0 < 170) { if (moved > 9) { clearTimeout(pd.timer); pd = null; } } // swiped early: that's scrolling
+      else if (moved > 6) startDrag();
+    });
+    document.addEventListener('pointerup', () => endDrag(true));
+    document.addEventListener('pointercancel', () => endDrag(false));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && pd?.active) endDrag(false); });
+    document.addEventListener('touchmove', e => { if (pd?.active) e.preventDefault(); }, { passive: false });
+    root.addEventListener('click', e => { if (suppressClick) { e.stopPropagation(); e.preventDefault(); } }, true);
+    root.addEventListener('contextmenu', e => { if (pd?.active) e.preventDefault(); }, true);
+
+    // Drag step headers to reorder steps
     let drag = null;
     const marker = document.createElement('div'); marker.className = 'pj-marker';
     root.addEventListener('dragstart', e => {
