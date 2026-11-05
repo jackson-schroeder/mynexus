@@ -4,6 +4,7 @@
 // With no Supabase config it runs fully local (single user) so the app works before the cloud is set up.
 const Store = (() => {
   const cfg = window.NEXUS_CONFIG || {};
+  const WEB = 'https://jackson-schroeder.github.io/mynexus/'; // where email links open (the phone web app), never localhost
   const sb = cfg.supabaseUrl && cfg.supabaseKey && window.supabase
     ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey) : null;
   const TABLES = ['projects', 'roles', 'members', 'invites', 'steps', 'cards', 'comments', 'attachments', 'milestones', 'updates', 'update_seen', 'profiles'];
@@ -151,7 +152,7 @@ const Store = (() => {
   // ---------- Accounts ----------
   async function signUp(email, password, username) {
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) return 'Username must be 3-20 letters, numbers or _';
-    const { data, error } = await sb.auth.signUp({ email, password, options: { data: { username } } });
+    const { data, error } = await sb.auth.signUp({ email, password, options: { data: { username }, emailRedirectTo: WEB } });
     if (error) return /database error/i.test(error.message) ? 'That username is taken' : error.message;
     if (!data.session) return 'Check your email to confirm, then sign in';
     await setUser(data.user);
@@ -163,7 +164,7 @@ const Store = (() => {
   }
   // Email codes: a one-time code (also a link) is emailed; the app takes the code
   async function requestCode(email) {
-    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: WEB } });
     return error ? (/signups not allowed|not found/i.test(error.message) ? 'No account with that email.' : error.message) : '';
   }
   async function verifyCode(email, token) {
@@ -172,7 +173,7 @@ const Store = (() => {
     await setUser(data.user); return '';
   }
   async function requestReset(email) {
-    const { error } = await sb.auth.resetPasswordForEmail(email);
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: WEB });
     return error ? error.message : '';
   }
   async function resetPassword(email, token, password) {
