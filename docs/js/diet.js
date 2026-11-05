@@ -132,7 +132,7 @@ const DietUI = (() => {
     const track = root.querySelector('.lg-track');
     i = Math.max(0, Math.min(1, i));
     if (!track || i === page || paging) return;
-    page = i; paging = true;
+    page = i; paging = true; window.crumbChanged?.();
     track.style.willChange = 'transform';
     track.style.transition = 'transform .8s cubic-bezier(.65,0,.35,1)';
     track.style.transform = `translateY(${-i * 100}%)`;
@@ -301,5 +301,7 @@ const DietUI = (() => {
   }
 
   const showHistory = () => { go('Fitness/Diet'); requestAnimationFrame(() => setPage(1)); };
-  return { mount, logMeal, addMeal, smoothie, showHistory, myMeals };
+  const onHistory = () => page === 1 && !document.documentElement.classList.contains('phone');
+  const toMain = () => setPage(0);
+  return { onHistory, toMain, mount, logMeal, addMeal, smoothie, showHistory, myMeals };
 })();

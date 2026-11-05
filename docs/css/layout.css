@@ -138,3 +138,5 @@ body.windowed { padding-top: 68px; }
 .search-title { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .search-sub { font-size: 12px; color: var(--muted); white-space: nowrap; }
 .search-none { padding: 14px; color: var(--muted); font-size: 14px; }
+
+#crumb { cursor: pointer; }

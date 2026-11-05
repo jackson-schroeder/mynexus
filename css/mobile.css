@@ -220,3 +220,7 @@ html.phone .card, html.phone .section { min-width: 0; overflow-wrap: break-word;
 html.phone .cal-block { overflow: visible; min-height: 34px; }
 html.phone .cal-block b { white-space: normal; overflow: visible; text-overflow: clip; }
 html.phone .pj-roles { margin: 0; padding: 0; overflow: visible; flex: none; }
+
+/* when the top row is crowded (e.g. "myProjects" + search + settings) the search shows just its icon until tapped */
+html.phone .search { container-type: inline-size; }
+@container (max-width: 120px) { html.phone .search input::placeholder { color: transparent; } }

@@ -213,7 +213,7 @@ const FitnessUI = (() => {
     const track = document.querySelector('#liftRoot .lg-track');
     i = Math.max(0, Math.min(1, i));
     if (!track || i === liftPage || paging) return;
-    liftPage = i; paging = true;
+    liftPage = i; paging = true; window.crumbChanged?.();
     track.style.willChange = 'transform';
     track.style.transition = 'transform .8s cubic-bezier(.65,0,.35,1)';
     track.style.transform = `translateY(${-i * 100}%)`;
@@ -619,5 +619,7 @@ const FitnessUI = (() => {
   const splitNames = () => Lift.splits.map(s => s.name);
 
   const showStats = () => { go('Fitness/Lifting'); requestAnimationFrame(() => setLiftPage(1)); };
-  return { showStats, lifting, running, dashCard, radar, lineChart, ringSvg, streakBadge, stat, emptyCard, demoTag, openStats, openLog, exerciseNames, splitNames, loggedExercises: () => allExercises().map(e => e.name) };
+  const onStats = () => liftPage === 1 && !document.documentElement.classList.contains('phone');
+  const toMain = () => setLiftPage(0);
+  return { onStats, toMain, showStats, lifting, running, dashCard, radar, lineChart, ringSvg, streakBadge, stat, emptyCard, demoTag, openStats, openLog, exerciseNames, splitNames, loggedExercises: () => allExercises().map(e => e.name) };
 })();

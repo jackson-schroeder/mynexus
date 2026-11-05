@@ -34,6 +34,7 @@ const Projects = (() => {
     else { view = { name: 'list' }; root.innerHTML = listView(); }
     root.querySelectorAll('[data-grow]').forEach(grow);
     loadPics();
+    window.crumbChanged?.();
     setTimeout(boardScroll);
     if (view.tab === 'updates') setTimeout(watchSeen); // start noticing which unread updates you actually look at
   }
@@ -855,5 +856,7 @@ const Projects = (() => {
   function open(pid, cid) { view = { name: 'board', id: pid }; go('Projects'); if (cid) setTimeout(() => cardModal(cid)); }
 
   const leave = () => { commitSeen(); render(); };
-  return { mount, render, open, leave, tag: (uid, pid) => ini(uid, userColors(pid)), color: (uid, pid) => userColors(pid)[uid] };
+  const inBoard = () => view.name === 'board' && !!Store.get('projects', view.id);
+  const toHub = () => { commitSeen(); view = { name: 'list' }; render(); };
+  return { mount, render, open, leave, inBoard, toHub, tag: (uid, pid) => ini(uid, userColors(pid)), color: (uid, pid) => userColors(pid)[uid] };
 })();
