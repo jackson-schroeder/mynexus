@@ -89,7 +89,7 @@ const Projects = (() => {
   function projectTile(p) {
     const cs = Store.projectCards(p.id), { pct } = Store.progress(p.id);
     return `<div class="tile pj-proj" data-act="open" data-id="${p.id}">
-      <div class="pj-phead">${picImg(p.id)}<div class="pj-pname">${esc(p.name)}</div></div>
+      <div class="pj-phead"><div class="pj-pname">${esc(p.name)}</div>${picImg(p.id)}</div>
       <div class="p">${Store.steps(p.id).length} steps · ${cs.length} cards · ${Store.members(p.id).length} people</div>
       <div class="pj-row"><div class="prog"><b style="width:${pct}%"></b></div><span class="p">${pct}%</span></div></div>`;
   }
