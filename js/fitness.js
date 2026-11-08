@@ -121,7 +121,7 @@ const FitnessUI = (() => {
     return `<div class="${flat ? 'fx-session flat' : 'tile fx-session'}"><div class="pj-row"><div><div class="it fx-sname">${esc(s.split)}</div>
       <div class="p">${whenLabel(s.at)} · ${s.exercises.length} exercise${s.exercises.length === 1 ? "" : "s"} · ${volume(s).toLocaleString()} lb volume</div></div>
       <span class="pj-spacer"></span>${flat || s.demo ? '' : `<button class="pj-x" data-delsession="${s.id}" title="Delete workout">×</button>`}</div>
-      <div class="fx-lifts">${s.exercises.map(e => { const [a, b] = setsText(e.sets); return `<div class="fx-lift"><span>${esc(e.name)}</span><span class="p">${a}</span><b>${b}</b></div>`; }).join('')}</div></div>`;
+      <div class="fx-lifts" data-fit>${s.exercises.map(e => { const [a, b] = setsText(e.sets); return `<div class="fx-lift"><span>${esc(e.name)}</span><span class="p">${a}</span><b>${b}</b></div>`; }).join('')}</div><span class="p fit-more" hidden></span></div>`;
   }
   const radarFoot = axes => { const on = axes.filter(([, v]) => v).sort((a, b) => b[1] - a[1]), off = axes.filter(([, v]) => !v);
     return on.length ? `<div class="fx-foot"><span class="p">Most worked</span>${on.slice(0, 3).map(([n]) => `<span class="chip">${n}</span>`).join('')}

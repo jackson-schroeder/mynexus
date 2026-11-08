@@ -237,3 +237,12 @@ html.phone .nt-bar .pj-btn { padding-left: 12px; padding-right: 12px; }
 
 html.phone #pageTitle.pj-named .pj-pic { width: 36px; height: 36px; border-radius: 10px; }
 html.phone .page-head h1 { min-width: 0; max-width: 100%; }
+
+/* last session: on a phone the card grows to fit all its exercises */
+html.phone .fx-fill .fx-session { flex: none; min-height: auto; padding-bottom: 16px; }
+html.phone .fx-fill .fx-lifts { flex: none; overflow: visible; }
+html.phone .fx-session .fit-more { display: none; }
+
+/* hover tooltips don't exist on a touchscreen, and their off-screen boxes made pages scroll sideways */
+html.phone .tip::before, html.phone .tip::after { display: none !important; }
+html.phone .tip { overflow: visible; }

@@ -68,6 +68,7 @@ function go(path) {
   if (mod) mod[1](document.getElementById(mod[0]));
   const pt = document.getElementById('pageTitle');
   pt.innerHTML = title(sub || tab);
+  pt.classList.remove('pj-named'); pt.removeAttribute('title'); // (a project's own title style only applies inside a project)
   if (tab === 'Projects' && typeof Projects !== 'undefined') Projects.syncTitle(); // inside a project the title is its name
   pt.dataset.go = tab; // clicking a page's title goes back to that tab (its last sub-tab)
   document.getElementById('subtabs').innerHTML = SUBS[tab].map(s =>
@@ -127,7 +128,7 @@ function renderDashProjects() {
   const ps = Store.myProjects().slice(-3).reverse();
   document.getElementById('dashProjects').innerHTML = ps.map(p => {
     const { finished, total, pct } = Store.progress(p.id);
-    return `<div class="row tile" data-go="Projects"><div><div class="it">${p.name.replace(/</g, '&lt;')}</div><div class="p">${finished} of ${total} cards in final step</div></div><div class="prog"><b style="width:${pct}%"></b></div><div class="r">${pct}%</div></div>`;
+    return `<div class="row tile" data-go="Projects"><div><div class="it">${p.name.replace(/</g, '&lt;')}</div><div class="p">${finished} of ${total} cards done</div></div><div class="prog"><b style="width:${pct}%"></b></div><div class="r">${pct}%</div></div>`;
   }).join('') || `<div class="row tile" data-go="Projects"><div class="it">+ Start a Project</div></div>`;
 }
 Store.subscribe(renderDashProjects);

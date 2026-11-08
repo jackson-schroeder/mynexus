@@ -204,3 +204,5 @@ input[type="date"].pj-in, input[type="time"].pj-in { color-scheme: dark; }
 .nt-title { font: inherit; font-size: 28px; font-weight: 500; letter-spacing: -0.02em; color: var(--text); background: none; border: 0; outline: none; resize: none; overflow: hidden; padding: 4px 2px; line-height: 1.25; flex-shrink: 0; }
 .nt-body { flex: 1 1 0; min-height: 0; font: inherit; font-size: 16px; line-height: 1.6; color: var(--text); background: none; border: 0; outline: none; resize: none; padding: 2px; }
 .nt-title::placeholder, .nt-body::placeholder { color: var(--muted); }
+
+.cal-day .pj-row, .cal-tray .pj-row { flex-wrap: wrap; }

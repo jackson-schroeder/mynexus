@@ -285,3 +285,7 @@ input[data-at] { text-transform: none; }
 
 .pj-phtag { margin: -6px 0 0 10px; }
 .tl-phase .p { margin-top: -2px; }
+
+/* settings: a little tighter so both columns fit short windows */
+.set-wrap .ac-card { padding: 18px 20px; gap: 10px; }
+.set-group { padding: 8px 12px; gap: 6px; }

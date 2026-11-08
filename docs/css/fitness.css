@@ -306,3 +306,9 @@ svg text { stroke: none; }
 .fx-run { font: inherit; color: var(--text); text-align: left; cursor: pointer; width: 100%; }
 .fx-runi { min-width: 0; }
 .fx-wrap > .fx-span2, .fx-span2 { grid-column: 1 / -1; }
+
+/* last session: the exercise list takes the card's spare height and hides rows that don't fit (+N more) */
+.fx-fill .fx-session { flex: 1 1 0; min-height: 0; }
+.fx-fill .fx-lifts { flex: 1 1 0; min-height: 0; overflow: hidden; }
+.fx-session .fit-more { position: absolute; right: 18px; bottom: 4px; }
+.fx-fill .fx-session { padding-bottom: 24px; }
