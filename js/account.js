@@ -1,5 +1,5 @@
 // mySettings: Account card + Tabs card.
-// Account: one myNexus account (Supabase) for everything — myProjects, myTodo, myCalendar, myRecents.
+// Account: one Nexus account (Supabase) for everything — myProjects, myTodo, myCalendar, myRecents.
 const Account = (() => {
   let root = null, mode = 'in', email = '', resetAsk = false, binMsg = '';
   const when = t => { const d = Math.floor((Date.now() - t) / 864e5); return d < 1 ? 'today' : d === 1 ? 'yesterday' : d + ' days ago'; };

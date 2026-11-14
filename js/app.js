@@ -28,7 +28,7 @@ function slide(from, to) {
   el.animate([{ transform: `translateX(${dir * 60}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.9,.25,1)' });
 }
 // The top-left title is a "back one level" button: inside a project it reads myProjects (click -> the projects hub),
-// on a hub or any page it reads myNexus (click -> the dashboard).
+// on a hub or any page it reads Nexus (click -> the dashboard).
 const crumbs = () => {
   if (current === 'Projects' && typeof Projects !== 'undefined' && Projects.inBoard()) return { name: 'Projects', tip: 'Back to the myProjects hub', up: () => Projects.toHub() };
   if (current === 'Fitness/Lifting' && typeof FitnessUI !== 'undefined' && FitnessUI.onStats()) return { name: 'Lifting', tip: 'Back to myLifting', up: () => FitnessUI.toMain() };
@@ -39,7 +39,7 @@ function updateCrumb() {
   const h = document.getElementById('crumb'), c = crumbs();
   if (!h || h.dataset.crumb === c.name) return;
   const first = !h.dataset.crumb; h.dataset.crumb = c.name; h.title = c.tip;
-  h.querySelector('.nm').textContent = c.name; h.querySelector('.ver').hidden = c.name !== 'Nexus';
+  h.querySelector('.nm').textContent = c.name; h.querySelector('.ver').hidden = c.name !== 'Nexus'; h.querySelector('.my').hidden = c.name === 'Nexus'; // the app name is plain "Nexus"
   if (!first) h.animate([{ opacity: 0, transform: 'translateX(-10px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2,.9,.25,1)' });
 }
 window.crumbChanged = updateCrumb;

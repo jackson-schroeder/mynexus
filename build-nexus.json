@@ -22,6 +22,6 @@
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
     "shortcutName": "myNexus",
-    "artifactName": "myNexus-Setup.exe"
+    "artifactName": "Nexus-Setup.exe"
   }
 }

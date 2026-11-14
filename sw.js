@@ -1,4 +1,4 @@
-// myNexus service worker: lets the phone app open instantly and work offline.
+// Nexus service worker: lets the phone app open instantly and work offline.
 // Network first (so updates arrive as soon as you're online), falling back to the saved copy.
 const CACHE = 'mynexus-v1';
 const SHELL = ['./', 'index.html', 'css/theme.css', 'css/layout.css', 'css/projects.css', 'css/time.css', 'css/fitness.css', 'css/mobile.css',

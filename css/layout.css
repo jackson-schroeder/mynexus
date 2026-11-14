@@ -1,4 +1,4 @@
-/* myNexus layout — positions and sizes only. Colors, radii, motion come from theme.css. */
+/* Nexus layout — positions and sizes only. Colors, radii, motion come from theme.css. */
 body { display: flex; padding: 16px var(--edge-gap) var(--edge-gap); height: 100vh; overflow: hidden; }
 .dragbar { position: fixed; top: 0; left: 0; right: 0; height: 14px; -webkit-app-region: drag; }
 .shell { display: flex; gap: var(--edge-gap); align-items: center; width: 100%; height: 100%; }
@@ -122,7 +122,7 @@ body.windowed { padding-top: 68px; }
 .subtabs button.on { background: var(--glass-hover); border-color: var(--edge); }
 .empty { flex: 1; border-radius: var(--r-xl); display: grid; place-items: center; color: var(--muted); font-size: 16px; min-height: 200px; }
 
-/* Version badge next to the myNexus title */
+/* Version badge next to the Nexus title */
 .ver { font-size: 15px; font-weight: 500; letter-spacing: .02em; margin-left: 8px; color: var(--muted); } /* sits on the same baseline as "Nexus" */
 /* Search */
 .search input { flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--text); background: none; border: 0; outline: none; }

@@ -320,7 +320,7 @@ const Store = (() => {
   // ---------- Pictures: everyone gets 30 MB of images (project pictures + image attachments) ----------
   const IMG_LIMIT = 30 * 1024 * 1024, IMG_RE = /\.(png|jpe?g|gif|webp|bmp|heic|heif|avif|svg)$/i;
   const isImage = name => IMG_RE.test(name || '');
-  const LIMIT_MSG = 'You’ve hit your 30 MB image limit. Remove personal images from myNexus to add more.';
+  const LIMIT_MSG = 'You’ve hit your 30 MB image limit. Remove personal images from Nexus to add more.';
   const picRow = pid => db.milestones.find(m => m.project_id === pid && m.title.startsWith('§pic|'));
   const picSize = row => (row ? Number(row.title.split('|')[2]) || 0 : 0);
   function imageUsage() {

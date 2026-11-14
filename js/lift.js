@@ -1,4 +1,4 @@
-// Shared by myNexus and the standalone myProjects app.
+// Shared by Nexus and the standalone myProjects app.
 
 // Window controls (Electron only)
 if (window.nexus) {
@@ -11,12 +11,12 @@ const phoneMQ = matchMedia('(max-width: 820px)');
 const isPhone = () => document.documentElement.classList.contains('phone');
 const setPhone = () => {
   document.documentElement.classList.toggle('phone', phoneMQ.matches && !window.nexus);
-  // on a phone the tab bar sits right under the myNexus bar; on desktop it goes back to its own spot
+  // on a phone the tab bar sits right under the Nexus bar; on desktop it goes back to its own spot
   const nav = document.querySelector('.navwrap'), top = document.querySelector('.panel > .top');
   if (!nav || !top) return;
   if (isPhone()) { if (nav.previousElementSibling !== top) top.after(nav); }
   else if (nav.parentElement.classList.contains('panel')) document.querySelector('.panel').before(nav);
-  const si = document.getElementById('searchIn'); if (si) si.placeholder = isPhone() ? 'Search' : 'Search myNexus…';
+  const si = document.getElementById('searchIn'); if (si) si.placeholder = isPhone() ? 'Search' : 'Search Nexus…';
   if (typeof moveIndicator === 'function') requestAnimationFrame(moveIndicator);
 };
 setPhone(); phoneMQ.addEventListener('change', () => { setPhone(); queueFit(); });

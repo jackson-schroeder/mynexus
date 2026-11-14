@@ -1,6 +1,6 @@
 // Personal data shared by myTodo, myCalendar, myRecents and the dashboard.
 // Offline-first: every change is saved on this computer right away and queued. When you're signed in to your
-// myNexus account (same account as myProjects) the queue is pushed to Supabase and fresh data is pulled,
+// Nexus account (same account as myProjects) the queue is pushed to Supabase and fresh data is pulled,
 // so the phone app will see the same tasks, events and recents.
 const Personal = (() => {
   const KEY = 'me.db';

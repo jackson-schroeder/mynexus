@@ -1,4 +1,4 @@
-// Search everything in myNexus. It's a library of providers: each returns items { title, kind, sub?, keys?, go() }.
+// Search everything in Nexus. It's a library of providers: each returns items { title, kind, sub?, keys?, go() }.
 // To make something new searchable, call Search.add(() => [...items]) — static pages/sections below, live data (exercises,
 // tasks, events, projects, cards…) is read fresh on every search so it's always up to date.
 const Search = (() => {
@@ -51,7 +51,7 @@ const Search = (() => {
     section('Project timeline', 'Projects', 'myProjects', 'timeline weeks phases portions start end date schedule card tables my cards all cards'),
     section('Project updates', 'Projects', 'myProjects', 'updates activity feed unread news changes message chat conversation group send'),
     section('Weekly miles', 'Fitness/Running', 'myRunning', 'running chart miles per week 3 month year'),
-    action('Take the tour', 'myNexus', 'tour walkthrough help guide tutorial welcome how it works', () => Tour.start()),
+    action('Take the tour', 'Nexus', 'tour walkthrough help guide tutorial welcome how it works', () => Tour.start()),
     action('Add cards to calendar', 'myCalendar', 'project cards todo drag schedule place add cards', () => TimeUI.Calendar.openTray()),
     action('Set sleep time', 'myCalendar', 'sleep bedtime wake up block rest night', () => go('Time/Calendar')),
     action('Log run', 'myRunning', 'add run jog miles distance time pace running', () => FitnessUI.openRun()),

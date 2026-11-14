@@ -1,4 +1,4 @@
-// myNexus cloud settings. Leave blank to run myProjects locally (on this computer only).
+// Nexus cloud settings. Leave blank to run myProjects locally (on this computer only).
 // Paste your Supabase Project URL and anon public key here to turn on shared projects + sync.
 window.NEXUS_CONFIG = {
   supabaseUrl: 'https://nlbdixfjsslcpvdwflnn.supabase.co',

@@ -1,6 +1,6 @@
 {
-  "name": "myNexus",
-  "short_name": "myNexus",
+  "name": "Nexus",
+  "short_name": "Nexus",
   "description": "Your personal manager: fitness, time, projects.",
   "start_url": "./",
   "scope": "./",

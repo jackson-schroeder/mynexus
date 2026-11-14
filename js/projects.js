@@ -1,5 +1,5 @@
 // myProjects UI: project list, kanban board, card details, people and roles.
-// Renders into any element via Projects.mount(el) — used by the myNexus tab and the standalone myProjects app.
+// Renders into any element via Projects.mount(el) — used by the Nexus tab and the standalone myProjects app.
 const Projects = (() => {
   let root = null, view = { name: 'list' }, modal = null, dragging = false, pendingRender = false;
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -7,7 +7,7 @@ const Projects = (() => {
   const initials = u => esc(Store.initials(u));
   const ago = t => { const m = Math.round((Date.now() - new Date(t)) / 6e4); return m < 1 ? 'just now' : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`; };
   const size = b => b > 1e6 ? (b / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1e3)) + ' KB';
-  const log = text => window.logActivity?.('Projects', text); // feeds myRecents in myNexus
+  const log = text => window.logActivity?.('Projects', text); // feeds myRecents in Nexus
   const STATUS = { local: 'On this computer only', online: 'Synced', syncing: 'Syncing…', offline: 'Offline — changes saved, will sync', nosetup: 'Cloud database not set up' };
 
   function mount(el) {
@@ -340,7 +340,7 @@ const Projects = (() => {
       const f = e.target.files[0]; e.target.value = ''; if (!f) return;
       if (!Store.isImage(f.name) && !f.type.startsWith('image/')) { err.textContent = 'Pick an image file.'; return; }
       const small = await shrink(f), freed = cur && cur.created_by === Store.me?.id ? Number(cur.title.split('|')[2]) || 0 : 0;
-      if (used() - freed + small.size > Store.IMG_LIMIT) { err.textContent = 'You\u2019ve hit your 30 MB image limit. Remove personal images from myNexus to add more.'; return; }
+      if (used() - freed + small.size > Store.IMG_LIMIT) { err.textContent = 'You\u2019ve hit your 30 MB image limit. Remove personal images from Nexus to add more.'; return; }
       err.textContent = ''; pending = small; removed = false; paint();
     };
     el.querySelector('#epRemove').onclick = () => { pending = null; removed = true; err.textContent = ''; paint(); };

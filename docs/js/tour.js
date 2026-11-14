@@ -19,7 +19,7 @@ const Tour = (() => {
   function draw() {
     if (!el) { el = document.createElement('div'); el.className = 'tour'; document.body.appendChild(el); }
     if (i < 0) {
-      el.innerHTML = `<div class="tile tour-card tour-ask"><h3>Welcome to ${title('myNexus')}</h3><p class="p">Want a quick tour? It shows what everything does and takes about a minute.</p>
+      el.innerHTML = `<div class="tile tour-card tour-ask"><h3>Welcome to <span class="nm">Nexus</span></h3><p class="p">Want a quick tour? It shows what everything does and takes about a minute.</p>
         <div class="pj-row"><button class="tile pj-btn primary" data-tour-act="next">Show me around</button><button class="tile pj-btn" data-tour-act="skip">No, I'm good</button></div></div>`;
       return;
     }

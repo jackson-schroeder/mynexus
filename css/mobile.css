@@ -1,4 +1,4 @@
-/* myNexus phone layout (html.phone is set for narrow screens by js/lift.js; the desktop app never gets it).
+/* Nexus phone layout (html.phone is set for narrow screens by js/lift.js; the desktop app never gets it).
    Pages scroll here instead of fitting one screen, and the tab bar sits at the bottom. */
 html.phone, html.phone body { height: 100%; overscroll-behavior: none; }
 html.phone body { display: block; padding: 0; overflow: hidden; }
@@ -17,7 +17,7 @@ html.phone .ver, html.phone .date, html.phone .weather { display: none; }
 html.phone .search { height: 40px; padding: 0 12px; }
 html.phone .iconbtn { width: 40px; height: 40px; }
 
-/* tab bar right under the myNexus bar (js/lift.js moves it there) */
+/* tab bar right under the Nexus bar (js/lift.js moves it there) */
 html.phone .navwrap { position: static; translate: none; width: 100%; height: auto; flex-shrink: 0; padding: 0; background: none; border: 0; }
 html.phone .navwrap::before { display: none; }
 html.phone nav, html.phone .navwrap:hover nav { position: relative; top: 0; left: 0; transform: none; opacity: 1; width: 100%; justify-content: space-around; gap: 0; padding: 4px; will-change: auto; }

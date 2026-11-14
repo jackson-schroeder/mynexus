@@ -11,7 +11,7 @@ const Gate = (() => {
   function render() {
     const up = mode === 'up';
     el.innerHTML = `<div class="tile pj-auth gate-card">
-      <h2><span class="my">my</span><span class="nm">Nexus</span></h2>
+      <h2><span class="nm">Nexus</span></h2>
       <p class="p">Sign in to open your app. You'll stay signed in until you've been away for 30 days.</p>
       <div class="pj-tabs"><button class="tile pj-btn${up ? '' : ' on'}" data-gate-mode="in">Sign in</button><button class="tile pj-btn${up ? ' on' : ''}" data-gate-mode="up">Create account</button></div>
       ${up ? '<input class="pj-in" id="gUser" data-at value="@" title="Username: 3-20 letters, numbers or _" autocomplete="username" autocapitalize="none">' : ''}

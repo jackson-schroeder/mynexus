@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, screen, dialog } = require('electron');
 const path = require('path');
 
-// Same code ships as two apps: myNexus (default) and the standalone myProjects
+// Same code ships as two apps: Nexus (default) and the standalone myProjects
 // (installer built with "mode": "projects", or run with --projects).
 const PROJECTS = require('./package.json').mode === 'projects' || process.argv.includes('--projects');
 const NAME = PROJECTS ? 'myProjects' : 'myNexus';
@@ -57,7 +57,7 @@ function setupUpdates(win) {
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.on('error', () => {});
   autoUpdater.on('update-downloaded', info => {
-    dialog.showMessageBox(win, { type: 'info', buttons: ['Restart now', 'Later'], defaultId: 0, title: 'myNexus update', message: `myNexus ${info.version} is ready`, detail: 'Restart to finish updating. Your data stays saved.' })
+    dialog.showMessageBox(win, { type: 'info', buttons: ['Restart now', 'Later'], defaultId: 0, title: 'Nexus update', message: `Nexus ${info.version} is ready`, detail: 'Restart to finish updating. Your data stays saved.' })
       .then(r => { if (r.response === 0) autoUpdater.quitAndInstall(); });
   });
   const check = () => autoUpdater.checkForUpdates().catch(() => {});
